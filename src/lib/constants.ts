@@ -229,4 +229,10 @@ export const RELATORIO_VAZIO = {
     largura: 0,
     observacoes: "",
   },
+  fechamento: {
+    horaTermino: "",
+    limpezaDrenagem: "" as const,
+    remocaoMassaSeca: "" as const,
+    consideracoesGerais: "",
+  },
 };

@@ -70,6 +70,14 @@ export interface Robo {
   area?: number;
 }
 
+// ---- Seção 6: Fechamento ----
+export interface Fechamento {
+  horaTermino: string;              // HH:MM
+  limpezaDrenagem: "Sim" | "Não" | "";
+  remocaoMassaSeca: "Sim" | "Não" | "";
+  consideracoesGerais: string;
+}
+
 // ---- Formulário completo ----
 export interface RelatorioCompleto {
   id?: string;           // gerado localmente
@@ -82,6 +90,7 @@ export interface RelatorioCompleto {
   tratorB: Trator;
   tratorC: Trator;
   robo: Robo;
+  fechamento: Fechamento;
   // totais calculados
   totalKm?: number;
   totalArea?: number;

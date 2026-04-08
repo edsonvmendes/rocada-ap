@@ -14,6 +14,7 @@ import SecaoMateriais from "@/components/form/SecaoMateriais";
 import SecaoRocadaManual from "@/components/form/SecaoRocadaManual";
 import SecaoTrator from "@/components/form/SecaoTrator";
 import SecaoRobo from "@/components/form/SecaoRobo";
+import SecaoFechamento from "@/components/form/SecaoFechamento";
 import ResumoTotais from "@/components/form/ResumoTotais";
 
 type FormData = Omit<RelatorioCompleto, "id" | "syncStatus" | "criadoEm">;
@@ -175,6 +176,11 @@ export default function PaginaFormulario() {
 
         {/* Resumo automático de totais */}
         <ResumoTotais dados={dados} />
+
+        <SecaoFechamento
+          dados={dados.fechamento}
+          onChange={(v) => setDados((d) => ({ ...d, fechamento: v }))}
+        />
 
         {/* Botão de envio */}
         <button

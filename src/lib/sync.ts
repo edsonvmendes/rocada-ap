@@ -121,6 +121,11 @@ function relatorioParaLinha(r: RelatorioCompleto): Record<string, unknown> {
     robo_km_produzido: roboKmProd,
     robo_area: roboArea,
     robo_obs: r.robo.observacoes,
+    // Fechamento
+    hora_termino: r.fechamento?.horaTermino || "",
+    limpeza_drenagem: r.fechamento?.limpezaDrenagem || "",
+    remocao_massa_seca: r.fechamento?.remocaoMassaSeca || "",
+    consideracoes_gerais: r.fechamento?.consideracoesGerais || "",
     // Totais
     total_km: totalKm,
     total_area: totalArea,

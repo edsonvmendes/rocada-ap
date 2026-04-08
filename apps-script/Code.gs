@@ -1,185 +1,131 @@
 // ============================================================
-// GOOGLE APPS SCRIPT - Backend para Google Sheets
-// Recebe relatórios do formulário e salva como linhas na planilha
+// GOOGLE APPS SCRIPT - Vincula ao Google Sheets existente
+// Planilha: RELATÓRIO DIÁRIO DE SERVIÇO (SLN RDT)
+// ID: 1bw43J7TvaUGVWC68xhLK6ey6N-npvtUrCkSuwAe-Wbw
 //
-// INSTRUÇÕES DE USO:
-// 1. Abra o Google Sheets
+// INSTRUÇÕES:
+// 1. Abra a planilha em sheets.google.com
 // 2. Extensões → Apps Script
-// 3. Cole este código completo
+// 3. Apague o código existente e cole este arquivo completo
 // 4. Clique em Implantar → Nova implantação
 // 5. Tipo: App da Web
-// 6. Executar como: Eu mesmo
+// 6. Executar como: Eu mesmo (edsonvmendes@gmail.com)
 // 7. Quem pode acessar: Qualquer pessoa
-// 8. Copie a URL gerada e cole no Admin do sistema
+// 8. Clique em Implantar e copie a URL gerada
+// 9. Cole a URL no Admin do sistema → aba Integração
 // ============================================================
 
-var SHEET_NAME = "Relatórios";
+// ID da planilha existente — NÃO alterar
+var SPREADSHEET_ID = "1bw43J7TvaUGVWC68xhLK6ey6N-npvtUrCkSuwAe-Wbw";
 
-// Cabeçalhos das colunas na planilha
-var CABECALHOS = [
-  "ID", "Data", "Hora Início", "Supervisor", "Encarregado", "Equipe", "Transporte",
-  "Qtd Líderes", "Qtd Op. Trator", "Qtd Op. Equip.", "Qtd Op. Roçad.", "Qtd Ajudantes",
-  "Condições",
-  // Materiais
-  "Gasolina Manual (L)", "Óleo 2T (L)", "Diesel Tratores (L)", "Gasolina Robô (L)",
-  "Nylon (un)", "Lâminas (un)",
-  // Roçada Manual
-  "Manual - Rodovia", "Manual - Canteiro",
-  "Manual - KM Inicial", "Manual - KM Final", "Manual - Largura",
-  "Manual - KM Produzido", "Manual - Área (m²)",
-  // Trator A
-  "Trator A - Ativo", "Trator A - Prefixo", "Trator A - Rodovia", "Trator A - Canteiro",
-  "Trator A - Tipo", "Trator A - KM Ini", "Trator A - KM Fim",
-  "Trator A - Largura", "Trator A - KM Prod.", "Trator A - Área (m²)", "Trator A - Obs",
-  // Trator B
-  "Trator B - Ativo", "Trator B - Prefixo", "Trator B - Rodovia", "Trator B - Canteiro",
-  "Trator B - Tipo", "Trator B - KM Ini", "Trator B - KM Fim",
-  "Trator B - Largura", "Trator B - KM Prod.", "Trator B - Área (m²)", "Trator B - Obs",
-  // Trator C
-  "Trator C - Ativo", "Trator C - Prefixo", "Trator C - Rodovia", "Trator C - Canteiro",
-  "Trator C - Tipo", "Trator C - KM Ini", "Trator C - KM Fim",
-  "Trator C - Largura", "Trator C - KM Prod.", "Trator C - Área (m²)", "Trator C - Obs",
-  // Robô
-  "Robô - Ativo", "Robô - Tipo", "Robô - Rodovia", "Robô - Canteiro",
-  "Robô - KM Ini", "Robô - KM Fim", "Robô - Largura",
-  "Robô - KM Prod.", "Robô - Área (m²)", "Robô - Obs",
-  // Totais
-  "TOTAL KM", "TOTAL ÁREA (m²)", "Enviado em"
+// Nome da aba onde os dados serão gravados
+// (a mesma aba onde o Google Forms já grava as respostas)
+var SHEET_NAME = "Respostas ao formulário 1";
+
+// Ordem exata das 55 colunas da planilha original
+// Gerada pelo Google Forms — respeitamos a mesma ordem
+var COLUNAS = [
+  "carimbo",               // 1  Carimbo de data/hora
+  "data",                  // 2  DATA
+  "hora_inicio",           // 3  HORÁRIO DE INÍCIO
+  "supervisor",            // 4  SUPERVISOR
+  "encarregado",           // 5  NOME DO ENCARREGADO
+  "equipe",                // 6  EQUIPE
+  "transporte",            // 7  TRANSPORTE (VEÍCULO)
+  "qtd_lideres",           // 8  TOTAL DE LÍDERES / DIA
+  "qtd_op_trator",         // 9  TOTAL DE TRATORISTAS / DIA
+  "qtd_op_equipamento",    // 10 TOTAL DE OPERADORES DE EQUIPAMENTO / DIA
+  "qtd_op_rocadeira",      // 11 TOTAL DE OPERADORES DE ROÇADEIRA / DIA
+  "qtd_ajudantes",         // 12 TOTAL DE AJUDANTES / DIA
+  "condicoes",             // 13 CONDIÇÕES DE TRABALHO
+  "gasolina_manual",       // 14 GASOLINA (Litros) - Roçada Manual
+  "oleo_2t",               // 15 ÓLEO 2T (Litros) - Roçada Manual
+  "nylon_unidades",        // 16 NYLON (un) - Roçada Manual
+  "laminas_unidades",      // 17 LÂMINA (un) - Roçada Manual
+  "diesel_tratores",       // 18 DIESEL (Litros) - Tratores
+  "gasolina_robo",         // 19 GASOLINA (Litros) (Robô)
+  "manual_rodovia",        // 20 RODOVIA (Roçada Manual)
+  "manual_canteiro",       // 21 CANTEIRO (Roçada Manual)
+  "manual_km_inicial",     // 22 KM INICIAL (Roçada Manual)
+  "manual_km_final",       // 23 KM FINAL (Roçada Manual)
+  "manual_largura",        // 24 LARGURA (média) (Roçada Manual)
+  "trator_a_prefixo",      // 25 TRATOR A (Prefixo)
+  "trator_a_rodovia",      // 26 RODOVIA (Trator A)
+  "trator_a_canteiro",     // 27 CANTEIRO (Trator A)
+  "trator_a_tipo",         // 28 TIPO DE ROÇADEIRA (Trator A)
+  "trator_a_km_inicial",   // 29 KM INICIAL (Trator A)
+  "trator_a_km_final",     // 30 KM FINAL (Trator A)
+  "trator_a_largura",      // 31 LARGURA (média) (Trator A)
+  "trator_b_prefixo",      // 32 TRATOR B (Prefixo)
+  "trator_b_rodovia",      // 33 RODOVIA (Trator B)
+  "trator_b_canteiro",     // 34 CANTEIRO (Trator B)
+  "trator_b_tipo",         // 35 TIPO DE ROÇADEIRA (Trator B)
+  "trator_b_km_inicial",   // 36 KM INICIAL (Trator B)
+  "trator_b_km_final",     // 37 KM FINAL (Trator B)
+  "trator_b_largura",      // 38 LARGURA (média) (Trator B)
+  "trator_c_prefixo",      // 39 TRATOR C (Prefixo)
+  "trator_c_rodovia",      // 40 RODOVIA (Trator C)
+  "trator_c_canteiro",     // 41 CANTEIRO (Trator C)
+  "trator_c_tipo",         // 42 TIPO DE ROÇADEIRA (Trator C)
+  "trator_c_km_inicial",   // 43 KM INICIAL (Trator C)
+  "trator_c_km_final",     // 44 KM FINAL (Trator C)
+  "trator_c_largura",      // 45 LARGURA (média) (Trator C)
+  "robo_tipo",             // 46 ROÇADA ROBÔ - RECURSO
+  "robo_rodovia",          // 47 RODOVIA (Robô)
+  "robo_canteiro",         // 48 CANTEIRO (Robô)
+  "robo_km_inicial",       // 49 KM INICIAL (Robô)
+  "robo_km_final",         // 50 KM FINAL (Robô)
+  "robo_largura",          // 51 LARGURA (média) (Robô)
+  "hora_termino",          // 52 HORÁRIO DE TÉRMINO
+  "limpeza_drenagem",      // 53 LIMPEZA DE DRENAGEM SUPERFICIAL
+  "remocao_massa_seca",    // 54 REMOÇÃO DE MASSA SECA
+  "consideracoes_gerais",  // 55 CONSIDERAÇÕES GERAIS
 ];
 
-// Cria ou busca a aba de relatórios
+// Abre a aba correta da planilha existente
 function getSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  // Tenta encontrar a aba pelo nome exato
   var sheet = ss.getSheetByName(SHEET_NAME);
 
+  // Se não encontrar pelo nome, pega a primeira aba
   if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    // Adiciona cabeçalhos na primeira linha
-    sheet.getRange(1, 1, 1, CABECALHOS.length).setValues([CABECALHOS]);
-    // Formata cabeçalhos
-    var headerRange = sheet.getRange(1, 1, 1, CABECALHOS.length);
-    headerRange.setBackground("#1e3a5f");
-    headerRange.setFontColor("#ffffff");
-    headerRange.setFontWeight("bold");
-    headerRange.setFontSize(10);
-    sheet.setFrozenRows(1);
-    // Ajusta largura das colunas importantes
-    sheet.setColumnWidth(1, 120);
-    sheet.setColumnWidth(2, 90);
-    sheet.setColumnWidth(4, 150);
-    sheet.setColumnWidth(5, 200);
+    sheet = ss.getSheets()[0];
   }
 
   return sheet;
 }
 
-// Recebe POST do formulário
+// Recebe POST do formulário web e grava na planilha
 function doPost(e) {
   try {
     var dados = JSON.parse(e.postData.contents);
     var sheet = getSheet();
 
-    // Monta a linha com os dados na ordem dos cabeçalhos
-    var linha = [
-      dados.id || "",
-      dados.data || "",
-      dados.hora_inicio || "",
-      dados.supervisor || "",
-      dados.encarregado || "",
-      dados.equipe || "",
-      dados.transporte || "",
-      dados.qtd_lideres || 0,
-      dados.qtd_op_trator || 0,
-      dados.qtd_op_equipamento || 0,
-      dados.qtd_op_rocadeira || 0,
-      dados.qtd_ajudantes || 0,
-      dados.condicoes || "",
-      // Materiais
-      dados.gasolina_manual || 0,
-      dados.oleo_2t || 0,
-      dados.diesel_tratores || 0,
-      dados.gasolina_robo || 0,
-      dados.nylon_unidades || 0,
-      dados.laminas_unidades || 0,
-      // Roçada Manual
-      dados.manual_rodovia || "",
-      dados.manual_canteiro || "",
-      dados.manual_km_inicial || 0,
-      dados.manual_km_final || 0,
-      dados.manual_largura || 0,
-      dados.manual_km_produzido || 0,
-      dados.manual_area || 0,
-      // Trator A
-      dados.trator_a_ativo ? "SIM" : "NÃO",
-      dados.trator_a_prefixo || "",
-      dados.trator_a_rodovia || "",
-      dados.trator_a_canteiro || "",
-      dados.trator_a_tipo || "",
-      dados.trator_a_km_inicial || 0,
-      dados.trator_a_km_final || 0,
-      dados.trator_a_largura || 0,
-      dados.trator_a_km_produzido || 0,
-      dados.trator_a_area || 0,
-      dados.trator_a_obs || "",
-      // Trator B
-      dados.trator_b_ativo ? "SIM" : "NÃO",
-      dados.trator_b_prefixo || "",
-      dados.trator_b_rodovia || "",
-      dados.trator_b_canteiro || "",
-      dados.trator_b_tipo || "",
-      dados.trator_b_km_inicial || 0,
-      dados.trator_b_km_final || 0,
-      dados.trator_b_largura || 0,
-      dados.trator_b_km_produzido || 0,
-      dados.trator_b_area || 0,
-      dados.trator_b_obs || "",
-      // Trator C
-      dados.trator_c_ativo ? "SIM" : "NÃO",
-      dados.trator_c_prefixo || "",
-      dados.trator_c_rodovia || "",
-      dados.trator_c_canteiro || "",
-      dados.trator_c_tipo || "",
-      dados.trator_c_km_inicial || 0,
-      dados.trator_c_km_final || 0,
-      dados.trator_c_largura || 0,
-      dados.trator_c_km_produzido || 0,
-      dados.trator_c_area || 0,
-      dados.trator_c_obs || "",
-      // Robô
-      dados.robo_ativo ? "SIM" : "NÃO",
-      dados.robo_tipo || "",
-      dados.robo_rodovia || "",
-      dados.robo_canteiro || "",
-      dados.robo_km_inicial || 0,
-      dados.robo_km_final || 0,
-      dados.robo_largura || 0,
-      dados.robo_km_produzido || 0,
-      dados.robo_area || 0,
-      dados.robo_obs || "",
-      // Totais
-      dados.total_km || 0,
-      dados.total_area || 0,
-      dados.enviado_em || new Date().toISOString()
-    ];
+    // Monta a linha na ordem exata das 55 colunas
+    var linha = COLUNAS.map(function(col) {
+      if (col === "carimbo") {
+        // Carimbo de data/hora gerado automaticamente
+        return new Date().toLocaleString("pt-BR");
+      }
+      var val = dados[col];
+      // Converte undefined/null para string vazia
+      return (val === undefined || val === null) ? "" : val;
+    });
 
-    // Adiciona a linha no final da planilha
     sheet.appendRow(linha);
 
     // Formata a nova linha
     var ultimaLinha = sheet.getLastRow();
-    var range = sheet.getRange(ultimaLinha, 1, 1, CABECALHOS.length);
+    var range = sheet.getRange(ultimaLinha, 1, 1, COLUNAS.length);
 
-    // Alterna cor das linhas (zebra)
+    // Zebra: alterna cor de fundo
     if (ultimaLinha % 2 === 0) {
-      range.setBackground("#f8fafc");
+      range.setBackground("#f0fdf4");
     } else {
       range.setBackground("#ffffff");
     }
-
-    // Destaca totais nas últimas colunas
-    var totalRange = sheet.getRange(ultimaLinha, CABECALHOS.length - 2, 1, 2);
-    totalRange.setBackground("#dcfce7");
-    totalRange.setFontWeight("bold");
 
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true, linha: ultimaLinha }))
@@ -192,13 +138,14 @@ function doPost(e) {
   }
 }
 
-// GET para testar se o script está funcionando
+// GET: testa se o script está ativo
 function doGet() {
   return ContentService
     .createTextOutput(JSON.stringify({
       ok: true,
-      mensagem: "Sistema de Relatório de Roçada - API ativa",
-      versao: "1.0"
+      mensagem: "API ativa — Relatório Diário de Roçada",
+      planilha: SPREADSHEET_ID,
+      aba: SHEET_NAME
     }))
     .setMimeType(ContentService.MimeType.JSON);
 }
