@@ -190,15 +190,6 @@ export default function PaginaFormulario() {
           {enviando ? "⏳ Salvando..." : "✅ ENVIAR RELATÓRIO"}
         </button>
 
-        {/* Navegação */}
-        <div className="grid grid-cols-2 gap-3">
-          <a href="/dashboard" className="bg-blue-600 text-white text-center py-4 rounded-xl font-bold text-sm active:scale-95 transition-all">
-            📊 Dashboard
-          </a>
-          <a href="/admin" className="bg-gray-600 text-white text-center py-4 rounded-xl font-bold text-sm active:scale-95 transition-all">
-            ⚙️ Admin
-          </a>
-        </div>
       </main>
     </div>
   );
