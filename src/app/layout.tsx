@@ -4,14 +4,30 @@ import "./globals.css";
 import ServiceWorkerRegister from "@/components/ui/ServiceWorkerRegister";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Relatório Diário de Roçada",
   description: "Sistema de relatório diário de serviço - Equipe Roçada",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.png",
+    shortcut: "/favicon.ico",
     apple: "/apple-icon.png",
+  },
+  openGraph: {
+    title: "Relatório Diário de Roçada",
+    description: "Sistema de relatório diário de serviço - Equipe Roçada",
+    type: "website",
+    locale: "pt_BR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Relatório Diário de Roçada",
+    description: "Sistema de relatório diário de serviço - Equipe Roçada",
   },
   appleWebApp: {
     capable: true,
