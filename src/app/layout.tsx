@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: "Relatório Diário de Roçada",
   description: "Sistema de relatório diário de serviço - Equipe Roçada",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -27,9 +31,6 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className={`${geist.variable} h-full antialiased`}>
-      <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </head>
       <body className="min-h-full flex flex-col bg-gray-100">
         <ServiceWorkerRegister />
         {children}
