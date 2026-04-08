@@ -49,17 +49,17 @@ export default function SectionCard({
         type="button"
         onClick={() => collapsible && setAberto(!aberto)}
         className={`
-          w-full flex items-center justify-between px-5 py-4
+          w-full flex items-center justify-between gap-3 px-5 py-4 text-left
           ${coresHeader[cor]}
           ${collapsible ? "cursor-pointer" : "cursor-default"}
         `}
       >
-        <div className="flex items-center gap-3">
-          {icone && <span className="text-2xl">{icone}</span>}
-          <span className="text-lg font-bold tracking-wide">{titulo}</span>
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {icone && <span className="shrink-0 text-2xl">{icone}</span>}
+          <span className="min-w-0 break-words text-lg font-bold tracking-wide">{titulo}</span>
         </div>
         {collapsible && (
-          <span className="text-2xl transition-transform duration-200" style={{
+          <span className="shrink-0 text-2xl transition-transform duration-200" style={{
             transform: aberto ? "rotate(180deg)" : "rotate(0deg)"
           }}>
             ▾
@@ -69,7 +69,7 @@ export default function SectionCard({
 
       {/* Conteúdo */}
       {(!collapsible || aberto) && (
-        <div className="p-4 flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4 p-4">
           {children}
         </div>
       )}

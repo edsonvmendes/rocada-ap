@@ -37,8 +37,8 @@ export default function SecaoTrator({ titulo, icone, cor, dados, onChange, confi
   return (
     <SectionCard titulo={titulo} icone={icone} cor={cor} collapsible defaultOpen={false}>
       {/* Toggle ativo/inativo */}
-      <div className="flex items-center justify-between bg-white rounded-xl border-2 border-gray-200 px-4 py-4">
-        <div>
+      <div className="flex items-center justify-between gap-3 bg-white rounded-xl border-2 border-gray-200 px-4 py-4">
+        <div className="min-w-0">
           <p className="font-bold text-gray-800">{titulo} em operação?</p>
           <p className="text-sm text-gray-500">Ative para preencher os dados</p>
         </div>
@@ -46,7 +46,7 @@ export default function SecaoTrator({ titulo, icone, cor, dados, onChange, confi
           type="button"
           onClick={() => set("ativo", !dados.ativo)}
           className={`
-            w-16 h-9 rounded-full transition-all duration-300 relative
+            relative h-9 w-16 shrink-0 rounded-full transition-all duration-300
             ${dados.ativo ? "bg-green-500" : "bg-gray-300"}
           `}
         >
@@ -95,7 +95,7 @@ export default function SecaoTrator({ titulo, icone, cor, dados, onChange, confi
           />
 
           {/* KMs */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <KMInput
               label="KM Inicial"
               value={dados.kmInicial}
@@ -137,7 +137,7 @@ export default function SecaoTrator({ titulo, icone, cor, dados, onChange, confi
               <p className={`text-xs font-bold uppercase mb-2 ${corResultado[cor].split(" ")[2]}`}>
                 ✅ Produção Calculada
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="text-center">
                   <p className={`text-xs ${corResultado[cor].split(" ")[3]}`}>KM Produzido</p>
                   <p className={`text-2xl font-bold ${corResultado[cor].split(" ")[4]}`}>{formatarKMProduzido(kmProduzido)}</p>

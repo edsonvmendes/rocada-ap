@@ -21,7 +21,7 @@ export default function SecaoMateriais({ dados, onChange }: Props) {
       {/* Roçada Manual */}
       <div className="bg-white rounded-xl border border-blue-200 p-4">
         <p className="text-sm font-bold text-blue-700 uppercase mb-3">🌿 Roçada Manual</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <NumberField
             label="Gasolina"
             value={dados.gasolinaManual}

@@ -28,8 +28,8 @@ export default function SecaoRobo({ dados, onChange, config }: Props) {
   return (
     <SectionCard titulo="Robô" icone="🤖" cor="purple" collapsible defaultOpen={false}>
       {/* Toggle ativo/inativo */}
-      <div className="flex items-center justify-between bg-white rounded-xl border-2 border-gray-200 px-4 py-4">
-        <div>
+      <div className="flex items-center justify-between gap-3 bg-white rounded-xl border-2 border-gray-200 px-4 py-4">
+        <div className="min-w-0">
           <p className="font-bold text-gray-800">Robô em operação?</p>
           <p className="text-sm text-gray-500">Ative para preencher os dados</p>
         </div>
@@ -37,7 +37,7 @@ export default function SecaoRobo({ dados, onChange, config }: Props) {
           type="button"
           onClick={() => set("ativo", !dados.ativo)}
           className={`
-            w-16 h-9 rounded-full transition-all duration-300 relative
+            relative h-9 w-16 shrink-0 rounded-full transition-all duration-300
             ${dados.ativo ? "bg-green-500" : "bg-gray-300"}
           `}
         >
@@ -76,7 +76,7 @@ export default function SecaoRobo({ dados, onChange, config }: Props) {
             obrigatorio
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <KMInput
               label="KM Inicial"
               value={dados.kmInicial}
@@ -114,7 +114,7 @@ export default function SecaoRobo({ dados, onChange, config }: Props) {
           {temProducao && (
             <div className="bg-purple-100 border-2 border-purple-400 rounded-xl p-4">
               <p className="text-xs font-bold text-purple-700 uppercase mb-2">✅ Produção Calculada</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="text-center">
                   <p className="text-xs text-purple-600">KM Produzido</p>
                   <p className="text-2xl font-bold text-purple-800">{formatarKMProduzido(kmProduzido)}</p>

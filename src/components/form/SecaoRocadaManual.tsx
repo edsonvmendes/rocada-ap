@@ -42,7 +42,7 @@ export default function SecaoRocadaManual({ dados, onChange, config }: Props) {
       />
 
       {/* KMs em lado a lado */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <KMInput
           label="KM Inicial"
           value={dados.kmInicial}
@@ -66,7 +66,7 @@ export default function SecaoRocadaManual({ dados, onChange, config }: Props) {
       {temProducao && (
         <div className="bg-green-100 border-2 border-green-400 rounded-xl p-4">
           <p className="text-xs font-bold text-green-700 uppercase mb-2">✅ Produção Calculada</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="text-center">
               <p className="text-xs text-green-600">KM Produzido</p>
               <p className="text-2xl font-bold text-green-800">{formatarKMProduzido(kmProduzido)}</p>

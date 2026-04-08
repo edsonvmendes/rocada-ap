@@ -24,7 +24,7 @@ export default function SelectField({
   placeholder = "Selecione...",
 }: SelectFieldProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
         {label}
         {obrigatorio && <span className="text-red-500 ml-1">*</span>}
@@ -34,7 +34,7 @@ export default function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`
-          w-full text-base font-medium
+          w-full min-w-0 max-w-full text-base font-medium
           border-2 rounded-xl px-4 py-4
           appearance-none bg-no-repeat
           transition-all duration-150

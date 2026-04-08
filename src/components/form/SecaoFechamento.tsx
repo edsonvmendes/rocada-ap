@@ -19,7 +19,7 @@ export default function SecaoFechamento({ dados, onChange }: Props) {
     <SectionCard titulo="Fechamento do Dia" icone="🏁" cor="gray">
 
       {/* Hora de Término */}
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Horário de Término
         </label>
@@ -28,7 +28,7 @@ export default function SecaoFechamento({ dados, onChange }: Props) {
           value={dados.horaTermino}
           onChange={(e) => set("horaTermino", e.target.value)}
           className={`
-            w-full text-xl font-bold border-2 rounded-xl px-4 py-4
+            w-full min-w-0 max-w-full text-base font-bold border-2 rounded-xl px-4 py-4 sm:text-xl
             focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200
             ${dados.horaTermino ? "border-green-400 bg-white" : "border-gray-300 bg-gray-50"}
           `}
@@ -40,14 +40,14 @@ export default function SecaoFechamento({ dados, onChange }: Props) {
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Limpeza de Drenagem Superficial?
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(["Sim", "Não"] as const).map((opcao) => (
             <button
               key={opcao}
               type="button"
               onClick={() => set("limpezaDrenagem", opcao)}
               className={`
-                py-5 rounded-xl text-xl font-bold border-2 transition-all active:scale-95
+                min-w-0 rounded-xl border-2 py-5 text-lg font-bold transition-all active:scale-95 sm:text-xl
                 ${dados.limpezaDrenagem === opcao
                   ? opcao === "Sim"
                     ? "bg-green-500 border-green-500 text-white"
@@ -67,14 +67,14 @@ export default function SecaoFechamento({ dados, onChange }: Props) {
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Remoção de Massa Seca?
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(["Sim", "Não"] as const).map((opcao) => (
             <button
               key={opcao}
               type="button"
               onClick={() => set("remocaoMassaSeca", opcao)}
               className={`
-                py-5 rounded-xl text-xl font-bold border-2 transition-all active:scale-95
+                min-w-0 rounded-xl border-2 py-5 text-lg font-bold transition-all active:scale-95 sm:text-xl
                 ${dados.remocaoMassaSeca === opcao
                   ? opcao === "Sim"
                     ? "bg-green-500 border-green-500 text-white"
@@ -90,7 +90,7 @@ export default function SecaoFechamento({ dados, onChange }: Props) {
       </div>
 
       {/* Considerações Gerais */}
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Considerações Gerais
         </label>

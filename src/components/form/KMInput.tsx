@@ -51,7 +51,7 @@ export default function KMInput({
   const temErro = !!erro;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
         {label}
         {obrigatorio && <span className="text-red-500 ml-1">*</span>}
@@ -59,7 +59,7 @@ export default function KMInput({
 
       {/* Container principal */}
       <div className={`
-        flex items-stretch rounded-xl border-2 overflow-hidden bg-white
+        flex w-full min-w-0 items-stretch rounded-xl border-2 overflow-hidden bg-white
         ${temErro ? "border-red-400" : valido ? "border-green-500" : "border-gray-300"}
       `}>
         {/* Campo KM */}
@@ -73,7 +73,7 @@ export default function KMInput({
             value={parteKm}
             onChange={handleKmChange}
             placeholder="000"
-            className="w-full text-center text-2xl font-bold py-3 px-1 focus:outline-none focus:bg-green-50 bg-transparent placeholder:text-gray-300"
+            className="w-full min-w-0 max-w-full bg-transparent px-1 py-3 text-center text-2xl font-bold placeholder:text-gray-300 focus:bg-green-50 focus:outline-none"
           />
           <span className="text-center text-xs text-gray-400 pb-1 leading-none">km</span>
         </div>
@@ -95,13 +95,13 @@ export default function KMInput({
             onChange={handleMetrosChange}
             onKeyDown={handleMetrosKeyDown}
             placeholder="000"
-            className="w-full text-center text-2xl font-bold py-3 px-1 focus:outline-none focus:bg-green-50 bg-transparent placeholder:text-gray-300"
+            className="w-full min-w-0 max-w-full bg-transparent px-1 py-3 text-center text-2xl font-bold placeholder:text-gray-300 focus:bg-green-50 focus:outline-none"
           />
           <span className="text-center text-xs text-gray-400 pb-1 leading-none">metros</span>
         </div>
 
         {/* Ícone validação */}
-        <div className="flex items-center pr-2 pb-4">
+        <div className="flex shrink-0 items-center pr-2 pb-4">
           {valido && !temErro && <span className="text-green-500 text-lg">✓</span>}
           {temErro && <span className="text-red-400 text-lg font-bold">!</span>}
         </div>

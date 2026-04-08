@@ -23,7 +23,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
   return (
     <SectionCard titulo="Informações Gerais" icone="📋" cor="green">
       {/* Data */}
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Data <span className="text-red-500">*</span>
         </label>
@@ -32,7 +32,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
           value={dados.data}
           onChange={(e) => set("data", e.target.value)}
           className={`
-            w-full text-xl font-bold border-2 rounded-xl px-4 py-4
+            w-full min-w-0 max-w-full text-base font-bold border-2 rounded-xl px-4 py-4 sm:text-xl
             focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200
             ${erros.data ? "border-red-400 bg-red-50" : dados.data ? "border-green-400" : "border-gray-300 bg-gray-50"}
           `}
@@ -41,7 +41,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
       </div>
 
       {/* Hora Início */}
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Hora de Início <span className="text-red-500">*</span>
         </label>
@@ -50,7 +50,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
           value={dados.horaInicio}
           onChange={(e) => set("horaInicio", e.target.value)}
           className={`
-            w-full text-xl font-bold border-2 rounded-xl px-4 py-4
+            w-full min-w-0 max-w-full text-base font-bold border-2 rounded-xl px-4 py-4 sm:text-xl
             focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200
             ${erros.horaInicio ? "border-red-400 bg-red-50" : dados.horaInicio ? "border-green-400" : "border-gray-300 bg-gray-50"}
           `}
@@ -100,7 +100,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
       {/* Quantidades - grid 2 colunas */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <p className="text-sm font-bold text-gray-600 uppercase mb-3">Quantidade de Pessoal</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[
             { label: "Líderes", campo: "qtdLideres" as const },
             { label: "Op. Trator", campo: "qtdOperadoresTrator" as const },
@@ -108,12 +108,12 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
             { label: "Op. Roçadeira", campo: "qtdOperadoresRocadeira" as const },
             { label: "Ajudantes", campo: "qtdAjudantes" as const },
           ].map(({ label, campo }) => (
-            <div key={campo} className="flex flex-col gap-1">
+            <div key={campo} className="flex min-w-0 flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600 uppercase">{label}</label>
               <select
                 value={dados[campo]}
                 onChange={(e) => set(campo, parseInt(e.target.value))}
-                className="border-2 border-gray-300 rounded-xl px-3 py-3 text-xl font-bold text-center bg-gray-50 focus:outline-none focus:border-green-500"
+                className="w-full min-w-0 max-w-full border-2 border-gray-300 rounded-xl bg-gray-50 px-3 py-3 text-lg font-bold text-center focus:border-green-500 focus:outline-none sm:text-xl"
               >
                 {QTD_OPTIONS.map((n) => (
                   <option key={n} value={n}>{n}</option>
