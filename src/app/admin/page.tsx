@@ -9,7 +9,7 @@ import Link from "next/link";
 import { AdminConfig } from "@/types";
 import { getAdminConfig, saveAdminConfig } from "@/lib/adminConfig";
 import { CONFIG_PADRAO } from "@/lib/adminConfig";
-import { setScriptUrl, getScriptUrl } from "@/lib/sync";
+import { setScriptUrl, getScriptUrl, getScriptToken, setScriptToken } from "@/lib/sync";
 
 type ListaKey = keyof Omit<AdminConfig, never>;
 
@@ -33,12 +33,18 @@ export default function PaginaAdmin() {
   const [listaAtiva, setListaAtiva] = useState<ListaKey | null>(null);
   const [novoItem, setNovoItem] = useState("");
   const [scriptUrl, setScriptUrlState] = useState("");
+  const [scriptToken, setScriptTokenState] = useState("");
   const [abaSelecionada, setAbaSelecionada] = useState<"listas" | "integracao">("listas");
 
   useEffect(() => {
-    Promise.all([getAdminConfig(), Promise.resolve(getScriptUrl())]).then(([c, url]) => {
+    Promise.all([
+      getAdminConfig(),
+      Promise.resolve(getScriptUrl()),
+      Promise.resolve(getScriptToken()),
+    ]).then(([c, url, token]) => {
       setConfig(c);
       if (url) setScriptUrlState(url);
+      if (token) setScriptTokenState(token);
       setCarregando(false);
     });
   }, []);
@@ -46,6 +52,7 @@ export default function PaginaAdmin() {
   const salvar = async () => {
     await saveAdminConfig(config);
     setScriptUrl(scriptUrl.trim());
+    setScriptToken(scriptToken.trim());
     setSalvo(true);
     setTimeout(() => setSalvo(false), 2500);
   };
@@ -247,6 +254,23 @@ export default function PaginaAdmin() {
                 placeholder="https://script.google.com/macros/s/..."
                 className="border-2 border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-600"
               />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Token de acesso
+              </label>
+              <input
+                type="password"
+                value={scriptToken}
+                onChange={(e) => setScriptTokenState(e.target.value)}
+                placeholder="Defina o mesmo token usado no Apps Script"
+                className="border-2 border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-600"
+              />
+              <p className="text-xs text-gray-500">
+                Esse token é enviado junto nas leituras e gravações da planilha para bloquear
+                acessos sem autorização.
+              </p>
             </div>
 
             {scriptUrl && (

@@ -22,7 +22,7 @@ export function useOfflineSync() {
 
   // Tenta sincronizar
   const sincronizar = useCallback(async () => {
-    if (!online || sincronizando) return;
+    if (sincronizando || !navigator.onLine) return null;
     setSincronizando(true);
     try {
       const resultado = await sincronizarPendentes();
@@ -30,10 +30,11 @@ export function useOfflineSync() {
         setUltimaSync(new Date().toLocaleTimeString("pt-BR"));
       }
       await atualizarPendentes();
+      return resultado;
     } finally {
       setSincronizando(false);
     }
-  }, [online, sincronizando, atualizarPendentes]);
+  }, [sincronizando, atualizarPendentes]);
 
   useEffect(() => {
     // Estado inicial de conexão
@@ -42,7 +43,7 @@ export function useOfflineSync() {
     const handleOnline = () => {
       setOnline(true);
       // Ao voltar a internet, sincroniza automaticamente
-      sincronizar();
+      void sincronizar();
     };
     const handleOffline = () => setOnline(false);
 
@@ -54,7 +55,7 @@ export function useOfflineSync() {
 
     // Tenta sincronizar a cada 2 minutos quando online
     const interval = setInterval(() => {
-      if (navigator.onLine) sincronizar();
+      if (navigator.onLine) void sincronizar();
     }, 2 * 60 * 1000);
 
     return () => {

@@ -11,23 +11,66 @@ import { parseKM } from "./kmUtils";
 export const DEFAULT_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbz3Maq_WqHuUbNIB8lfBzJSXQHHL8YFmakRiZHJzOxBf9lW-bgjd4DulkX1Ikc0DYU7/exec";
 
+const SCRIPT_URL_KEY = "gas_url";
+const SCRIPT_TOKEN_KEY = "gas_token";
+
 function normalizarScriptUrl(url: string | null): string | null {
   const valor = url?.trim();
+  return valor ? valor : null;
+}
+
+function normalizarScriptToken(token: string | null): string | null {
+  const valor = token?.trim();
   return valor ? valor : null;
 }
 
 // URL do Google Apps Script (configurada pelo admin no localStorage)
 export function getScriptUrl(): string | null {
   if (typeof window === "undefined") return null;
-  const configurada = normalizarScriptUrl(localStorage.getItem("gas_url"));
+  const configurada = normalizarScriptUrl(localStorage.getItem(SCRIPT_URL_KEY));
   if (configurada) return configurada;
-  localStorage.setItem("gas_url", DEFAULT_SCRIPT_URL);
+  localStorage.setItem(SCRIPT_URL_KEY, DEFAULT_SCRIPT_URL);
   return DEFAULT_SCRIPT_URL;
 }
 
 export function setScriptUrl(url: string): void {
   const configurada = normalizarScriptUrl(url) ?? DEFAULT_SCRIPT_URL;
-  localStorage.setItem("gas_url", configurada);
+  localStorage.setItem(SCRIPT_URL_KEY, configurada);
+}
+
+export function getScriptToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return normalizarScriptToken(localStorage.getItem(SCRIPT_TOKEN_KEY));
+}
+
+export function setScriptToken(token: string): void {
+  const configurado = normalizarScriptToken(token);
+  if (!configurado) {
+    localStorage.removeItem(SCRIPT_TOKEN_KEY);
+    return;
+  }
+  localStorage.setItem(SCRIPT_TOKEN_KEY, configurado);
+}
+
+export function buildScriptUrl(
+  baseUrl: string,
+  params?: Record<string, string | number | boolean | null | undefined>
+): string {
+  const url = new URL(baseUrl);
+  const token = getScriptToken();
+
+  if (token) {
+    url.searchParams.set("token", token);
+  }
+
+  if (params) {
+    Object.entries(params).forEach(([chave, valor]) => {
+      if (valor === null || valor === undefined || valor === "") return;
+      url.searchParams.set(chave, String(valor));
+    });
+  }
+
+  return url.toString();
 }
 
 // Converte o relatório para o formato de linha do Google Sheets
@@ -152,7 +195,7 @@ async function enviarRelatorio(relatorio: RelatorioCompleto): Promise<boolean> {
 
   try {
     const linha = relatorioParaLinha(relatorio);
-    const response = await fetch(url, {
+    const response = await fetch(buildScriptUrl(url), {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify(linha),

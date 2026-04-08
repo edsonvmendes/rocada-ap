@@ -1,67 +1,67 @@
 // ============================================================
-// GOOGLE APPS SCRIPT - Planilha: RELATÓRIO DIÁRIO DE SERVIÇO
+// GOOGLE APPS SCRIPT - Planilha: RELATORIO DIARIO DE SERVICO
 // ID: 1bw43J7TvaUGVWC68xhLK6ey6N-npvtUrCkSuwAe-Wbw
 // ============================================================
 
 var SPREADSHEET_ID = "1bw43J7TvaUGVWC68xhLK6ey6N-npvtUrCkSuwAe-Wbw";
-var SHEET_NAME = "Respostas ao formulário 1";
+var SHEET_NAME = "Respostas ao formulario 1";
 
 var COLUNAS = [
-  "carimbo",               // 1  Carimbo de data/hora
-  "data",                  // 2  DATA
-  "hora_inicio",           // 3  HORÁRIO DE INÍCIO
-  "supervisor",            // 4  SUPERVISOR
-  "encarregado",           // 5  NOME DO ENCARREGADO
-  "equipe",                // 6  EQUIPE
-  "transporte",            // 7  TRANSPORTE (VEÍCULO)
-  "qtd_lideres",           // 8  TOTAL DE LÍDERES / DIA
-  "qtd_op_trator",         // 9  TOTAL DE TRATORISTAS / DIA
-  "qtd_op_equipamento",    // 10 TOTAL DE OPERADORES DE EQUIPAMENTO / DIA
-  "qtd_op_rocadeira",      // 11 TOTAL DE OPERADORES DE ROÇADEIRA / DIA
-  "qtd_ajudantes",         // 12 TOTAL DE AJUDANTES / DIA
-  "condicoes",             // 13 CONDIÇÕES DE TRABALHO
-  "gasolina_manual",       // 14 GASOLINA (Litros) - Roçada Manual
-  "oleo_2t",               // 15 ÓLEO 2T (Litros) - Roçada Manual
-  "nylon_unidades",        // 16 NYLON (un) - Roçada Manual
-  "laminas_unidades",      // 17 LÂMINA (un) - Roçada Manual
-  "diesel_tratores",       // 18 DIESEL (Litros) - Tratores
-  "gasolina_robo",         // 19 GASOLINA (Litros) (Robô)
-  "manual_rodovia",        // 20 RODOVIA (Roçada Manual)
-  "manual_canteiro",       // 21 CANTEIRO (Roçada Manual)
-  "manual_km_inicial",     // 22 KM INICIAL (Roçada Manual)
-  "manual_km_final",       // 23 KM FINAL (Roçada Manual)
-  "manual_largura",        // 24 LARGURA (média) (Roçada Manual)
-  "trator_a_prefixo",      // 25 TRATOR A (Prefixo)
-  "trator_a_rodovia",      // 26 RODOVIA (Trator A)
-  "trator_a_canteiro",     // 27 CANTEIRO (Trator A)
-  "trator_a_tipo",         // 28 TIPO DE ROÇADEIRA (Trator A)
-  "trator_a_km_inicial",   // 29 KM INICIAL (Trator A)
-  "trator_a_km_final",     // 30 KM FINAL (Trator A)
-  "trator_a_largura",      // 31 LARGURA (média) (Trator A)
-  "trator_b_prefixo",      // 32 TRATOR B (Prefixo)
-  "trator_b_rodovia",      // 33 RODOVIA (Trator B)
-  "trator_b_canteiro",     // 34 CANTEIRO (Trator B)
-  "trator_b_tipo",         // 35 TIPO DE ROÇADEIRA (Trator B)
-  "trator_b_km_inicial",   // 36 KM INICIAL (Trator B)
-  "trator_b_km_final",     // 37 KM FINAL (Trator B)
-  "trator_b_largura",      // 38 LARGURA (média) (Trator B)
-  "trator_c_prefixo",      // 39 TRATOR C (Prefixo)
-  "trator_c_rodovia",      // 40 RODOVIA (Trator C)
-  "trator_c_canteiro",     // 41 CANTEIRO (Trator C)
-  "trator_c_tipo",         // 42 TIPO DE ROÇADEIRA (Trator C)
-  "trator_c_km_inicial",   // 43 KM INICIAL (Trator C)
-  "trator_c_km_final",     // 44 KM FINAL (Trator C)
-  "trator_c_largura",      // 45 LARGURA (média) (Trator C)
-  "robo_tipo",             // 46 ROÇADA ROBÔ - RECURSO
-  "robo_rodovia",          // 47 RODOVIA (Robô)
-  "robo_canteiro",         // 48 CANTEIRO (Robô)
-  "robo_km_inicial",       // 49 KM INICIAL (Robô)
-  "robo_km_final",         // 50 KM FINAL (Robô)
-  "robo_largura",          // 51 LARGURA (média) (Robô)
-  "hora_termino",          // 52 HORÁRIO DE TÉRMINO
-  "limpeza_drenagem",      // 53 LIMPEZA DE DRENAGEM SUPERFICIAL
-  "remocao_massa_seca",    // 54 REMOÇÃO DE MASSA SECA
-  "consideracoes_gerais",  // 55 CONSIDERAÇÕES GERAIS
+  "carimbo",
+  "data",
+  "hora_inicio",
+  "supervisor",
+  "encarregado",
+  "equipe",
+  "transporte",
+  "qtd_lideres",
+  "qtd_op_trator",
+  "qtd_op_equipamento",
+  "qtd_op_rocadeira",
+  "qtd_ajudantes",
+  "condicoes",
+  "gasolina_manual",
+  "oleo_2t",
+  "nylon_unidades",
+  "laminas_unidades",
+  "diesel_tratores",
+  "gasolina_robo",
+  "manual_rodovia",
+  "manual_canteiro",
+  "manual_km_inicial",
+  "manual_km_final",
+  "manual_largura",
+  "trator_a_prefixo",
+  "trator_a_rodovia",
+  "trator_a_canteiro",
+  "trator_a_tipo",
+  "trator_a_km_inicial",
+  "trator_a_km_final",
+  "trator_a_largura",
+  "trator_b_prefixo",
+  "trator_b_rodovia",
+  "trator_b_canteiro",
+  "trator_b_tipo",
+  "trator_b_km_inicial",
+  "trator_b_km_final",
+  "trator_b_largura",
+  "trator_c_prefixo",
+  "trator_c_rodovia",
+  "trator_c_canteiro",
+  "trator_c_tipo",
+  "trator_c_km_inicial",
+  "trator_c_km_final",
+  "trator_c_largura",
+  "robo_tipo",
+  "robo_rodovia",
+  "robo_canteiro",
+  "robo_km_inicial",
+  "robo_km_final",
+  "robo_largura",
+  "hora_termino",
+  "limpeza_drenagem",
+  "remocao_massa_seca",
+  "consideracoes_gerais",
 ];
 
 function getSheet() {
@@ -71,16 +71,61 @@ function getSheet() {
   return sheet;
 }
 
-// ---- POST: recebe e grava um relatório ----
-function doPost(e) {
-  try {
-    var dados = JSON.parse(e.postData.contents);
-    var sheet = getSheet();
+function getApiTokenConfigurado() {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty("API_TOKEN");
+  return token ? String(token).trim() : "";
+}
 
+function tokenRecebido(e) {
+  if (!e) return "";
+
+  if (e.parameter && e.parameter.token) {
+    return String(e.parameter.token).trim();
+  }
+
+  if (e.postData && e.postData.contents) {
+    try {
+      var dados = JSON.parse(e.postData.contents);
+      if (dados && dados.token) {
+        return String(dados.token).trim();
+      }
+    } catch (erro) {}
+  }
+
+  return "";
+}
+
+function autorizado(e) {
+  var tokenConfigurado = getApiTokenConfigurado();
+  if (!tokenConfigurado) return true;
+  return tokenRecebido(e) === tokenConfigurado;
+}
+
+function jsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function unauthorizedResponse() {
+  return jsonResponse({ ok: false, erro: "Nao autorizado" });
+}
+
+function doPost(e) {
+  if (!autorizado(e)) {
+    return unauthorizedResponse();
+  }
+
+  try {
+    var dados = JSON.parse(e.postData.contents || "{}");
+    delete dados.token;
+
+    var sheet = getSheet();
     var linha = COLUNAS.map(function(col) {
       if (col === "carimbo") return new Date().toLocaleString("pt-BR");
       var val = dados[col];
-      return (val === undefined || val === null) ? "" : val;
+      return val === undefined || val === null ? "" : val;
     });
 
     sheet.appendRow(linha);
@@ -89,38 +134,32 @@ function doPost(e) {
     var range = sheet.getRange(ultimaLinha, 1, 1, COLUNAS.length);
     range.setBackground(ultimaLinha % 2 === 0 ? "#f0fdf4" : "#ffffff");
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: true, linha: ultimaLinha }))
-      .setMimeType(ContentService.MimeType.JSON);
-
+    return jsonResponse({ ok: true, linha: ultimaLinha });
   } catch (erro) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, erro: erro.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ ok: false, erro: erro.toString() });
   }
 }
 
-// ---- GET: retorna dados da planilha para o dashboard ----
 function doGet(e) {
   var action = e && e.parameter && e.parameter.action ? e.parameter.action : "status";
 
-  // Retorna todos os dados da planilha como JSON
   if (action === "getData") {
+    if (!autorizado(e)) {
+      return unauthorizedResponse();
+    }
+
     try {
       var sheet = getSheet();
       var lastRow = sheet.getLastRow();
 
-      // Sem dados (só cabeçalho)
       if (lastRow <= 1) {
         return jsonResponse({ ok: true, dados: [] });
       }
 
-      // Lê todas as linhas de dados (ignora a linha 1 de cabeçalho)
       var numRows = lastRow - 1;
       var range = sheet.getRange(2, 1, numRows, COLUNAS.length);
       var valores = range.getValues();
 
-      // Converte cada linha num objeto usando os nomes das colunas
       var dados = valores.map(function(linha) {
         var obj = {};
         COLUNAS.forEach(function(col, idx) {
@@ -129,33 +168,25 @@ function doGet(e) {
         return obj;
       });
 
-      // Remove linhas completamente vazias
       dados = dados.filter(function(row) {
-        return row["data"] !== "" || row["encarregado"] !== "";
+        return row.data !== "" || row.encarregado !== "";
       });
 
       return jsonResponse({ ok: true, total: dados.length, dados: dados });
-
     } catch (erro) {
       return jsonResponse({ ok: false, erro: erro.toString() });
     }
   }
 
-  // Status padrão
   return jsonResponse({
     ok: true,
-    mensagem: "API ativa — Relatório Diário de Roçada",
+    mensagem: "API ativa - Relatorio Diario de Rocada",
     planilha: SPREADSHEET_ID,
+    tokenConfigurado: Boolean(getApiTokenConfigurado()),
     endpoints: {
       status: "GET ?action=status",
-      dados:  "GET ?action=getData",
-      gravar: "POST (body JSON)"
-    }
+      dados: "GET ?action=getData&token=...",
+      gravar: "POST ?token=... (body JSON)",
+    },
   });
-}
-
-function jsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
 }
