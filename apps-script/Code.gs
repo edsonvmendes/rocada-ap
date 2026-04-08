@@ -1,29 +1,11 @@
 // ============================================================
-// GOOGLE APPS SCRIPT - Vincula ao Google Sheets existente
-// Planilha: RELATÓRIO DIÁRIO DE SERVIÇO (SLN RDT)
+// GOOGLE APPS SCRIPT - Planilha: RELATÓRIO DIÁRIO DE SERVIÇO
 // ID: 1bw43J7TvaUGVWC68xhLK6ey6N-npvtUrCkSuwAe-Wbw
-//
-// INSTRUÇÕES:
-// 1. Abra a planilha em sheets.google.com
-// 2. Extensões → Apps Script
-// 3. Apague o código existente e cole este arquivo completo
-// 4. Clique em Implantar → Nova implantação
-// 5. Tipo: App da Web
-// 6. Executar como: Eu mesmo (edsonvmendes@gmail.com)
-// 7. Quem pode acessar: Qualquer pessoa
-// 8. Clique em Implantar e copie a URL gerada
-// 9. Cole a URL no Admin do sistema → aba Integração
 // ============================================================
 
-// ID da planilha existente — NÃO alterar
 var SPREADSHEET_ID = "1bw43J7TvaUGVWC68xhLK6ey6N-npvtUrCkSuwAe-Wbw";
-
-// Nome da aba onde os dados serão gravados
-// (a mesma aba onde o Google Forms já grava as respostas)
 var SHEET_NAME = "Respostas ao formulário 1";
 
-// Ordem exata das 55 colunas da planilha original
-// Gerada pelo Google Forms — respeitamos a mesma ordem
 var COLUNAS = [
   "carimbo",               // 1  Carimbo de data/hora
   "data",                  // 2  DATA
@@ -82,50 +64,30 @@ var COLUNAS = [
   "consideracoes_gerais",  // 55 CONSIDERAÇÕES GERAIS
 ];
 
-// Abre a aba correta da planilha existente
 function getSheet() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-
-  // Tenta encontrar a aba pelo nome exato
   var sheet = ss.getSheetByName(SHEET_NAME);
-
-  // Se não encontrar pelo nome, pega a primeira aba
-  if (!sheet) {
-    sheet = ss.getSheets()[0];
-  }
-
+  if (!sheet) sheet = ss.getSheets()[0];
   return sheet;
 }
 
-// Recebe POST do formulário web e grava na planilha
+// ---- POST: recebe e grava um relatório ----
 function doPost(e) {
   try {
     var dados = JSON.parse(e.postData.contents);
     var sheet = getSheet();
 
-    // Monta a linha na ordem exata das 55 colunas
     var linha = COLUNAS.map(function(col) {
-      if (col === "carimbo") {
-        // Carimbo de data/hora gerado automaticamente
-        return new Date().toLocaleString("pt-BR");
-      }
+      if (col === "carimbo") return new Date().toLocaleString("pt-BR");
       var val = dados[col];
-      // Converte undefined/null para string vazia
       return (val === undefined || val === null) ? "" : val;
     });
 
     sheet.appendRow(linha);
 
-    // Formata a nova linha
     var ultimaLinha = sheet.getLastRow();
     var range = sheet.getRange(ultimaLinha, 1, 1, COLUNAS.length);
-
-    // Zebra: alterna cor de fundo
-    if (ultimaLinha % 2 === 0) {
-      range.setBackground("#f0fdf4");
-    } else {
-      range.setBackground("#ffffff");
-    }
+    range.setBackground(ultimaLinha % 2 === 0 ? "#f0fdf4" : "#ffffff");
 
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true, linha: ultimaLinha }))
@@ -138,14 +100,62 @@ function doPost(e) {
   }
 }
 
-// GET: testa se o script está ativo
-function doGet() {
+// ---- GET: retorna dados da planilha para o dashboard ----
+function doGet(e) {
+  var action = e && e.parameter && e.parameter.action ? e.parameter.action : "status";
+
+  // Retorna todos os dados da planilha como JSON
+  if (action === "getData") {
+    try {
+      var sheet = getSheet();
+      var lastRow = sheet.getLastRow();
+
+      // Sem dados (só cabeçalho)
+      if (lastRow <= 1) {
+        return jsonResponse({ ok: true, dados: [] });
+      }
+
+      // Lê todas as linhas de dados (ignora a linha 1 de cabeçalho)
+      var numRows = lastRow - 1;
+      var range = sheet.getRange(2, 1, numRows, COLUNAS.length);
+      var valores = range.getValues();
+
+      // Converte cada linha num objeto usando os nomes das colunas
+      var dados = valores.map(function(linha) {
+        var obj = {};
+        COLUNAS.forEach(function(col, idx) {
+          obj[col] = linha[idx] !== undefined ? String(linha[idx]) : "";
+        });
+        return obj;
+      });
+
+      // Remove linhas completamente vazias
+      dados = dados.filter(function(row) {
+        return row["data"] !== "" || row["encarregado"] !== "";
+      });
+
+      return jsonResponse({ ok: true, total: dados.length, dados: dados });
+
+    } catch (erro) {
+      return jsonResponse({ ok: false, erro: erro.toString() });
+    }
+  }
+
+  // Status padrão
+  return jsonResponse({
+    ok: true,
+    mensagem: "API ativa — Relatório Diário de Roçada",
+    planilha: SPREADSHEET_ID,
+    endpoints: {
+      status: "GET ?action=status",
+      dados:  "GET ?action=getData",
+      gravar: "POST (body JSON)"
+    }
+  });
+}
+
+function jsonResponse(obj) {
   return ContentService
-    .createTextOutput(JSON.stringify({
-      ok: true,
-      mensagem: "API ativa — Relatório Diário de Roçada",
-      planilha: SPREADSHEET_ID,
-      aba: SHEET_NAME
-    }))
+    .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
