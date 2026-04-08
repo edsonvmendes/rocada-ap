@@ -1,19 +1,17 @@
 "use client";
 // ============================================================
-// COMPONENTE KMInput - Input de KM com auto-formatação XXX,XXX
-// Aceita apenas dígitos, formata automaticamente enquanto digita
+// COMPONENTE KMInput - Dois campos separados: [KM] , [metros]
+// Sem formatação automática. O que o usuário digita = o que aparece.
 // ============================================================
 
-import React, { useState, useRef } from "react";
-import { formatarKM, finalizarKM, validarKM } from "@/lib/kmUtils";
+import React, { useRef } from "react";
 
 interface KMInputProps {
   label: string;
-  value: string;
+  value: string;           // formato interno: "XXX,XXX" ou ""
   onChange: (valor: string) => void;
   obrigatorio?: boolean;
   erro?: string;
-  placeholder?: string;
 }
 
 export default function KMInput({
@@ -22,58 +20,47 @@ export default function KMInput({
   onChange,
   obrigatorio = false,
   erro,
-  placeholder = "000,000",
 }: KMInputProps) {
-  const [focado, setFocado] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const refMetros = useRef<HTMLInputElement>(null);
+  const refKm = useRef<HTMLInputElement>(null);
 
-  // Ao digitar: aceita só dígitos e formata em tempo real
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    const soDigitos = raw.replace(/\D/g, "").slice(0, 6);
-    const formatado = formatarKM(soDigitos);
-    onChange(formatado);
+  // Separa o valor interno "XXX,XXX" nos dois campos
+  const partes = value ? value.split(",") : ["", ""];
+  const parteKm = partes[0] ?? "";
+  const parteMetros = partes[1] ?? "";
+
+  // Atualiza o valor interno combinando os dois campos
+  const atualizar = (km: string, metros: string) => {
+    if (!km && !metros) {
+      onChange("");
+      return;
+    }
+    onChange(`${km},${metros}`);
   };
 
-  // Ao perder o foco: finaliza o formato (ex: "020" → "020,000")
-  const handleBlur = () => {
-    setFocado(false);
-    if (value) {
-      const finalizado = finalizarKM(value);
-      onChange(finalizado);
+  const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, "").slice(0, 3);
+    atualizar(val, parteMetros);
+    // Avança automaticamente para o campo de metros ao digitar 3 dígitos
+    if (val.length === 3) {
+      setTimeout(() => refMetros.current?.focus(), 0);
     }
   };
 
-  // Ao focar: seleciona tudo para facilitar correção
-  const handleFocus = () => {
-    setFocado(true);
-    setTimeout(() => inputRef.current?.select(), 50);
+  const handleMetrosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, "").slice(0, 3);
+    atualizar(parteKm, val);
   };
 
-  // Evita colar conteúdo com formatação errada
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const colado = e.clipboardData.getData("text");
-    const soDigitos = colado.replace(/\D/g, "").slice(0, 6);
-    const formatado = formatarKM(soDigitos);
-    onChange(formatado);
-  };
-
-  // Impede teclas não numéricas (exceto backspace, delete, setas, tab)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const permitidas = [
-      "Backspace", "Delete", "ArrowLeft", "ArrowRight",
-      "Tab", "Enter", "Home", "End",
-    ];
-    const ehDigito = /^\d$/.test(e.key);
-    if (!ehDigito && !permitidas.includes(e.key)) {
-      e.preventDefault();
+  // Ao pressionar backspace no campo metros vazio, volta pro campo km
+  const handleMetrosKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && parteMetros === "") {
+      refKm.current?.focus();
     }
   };
 
-  const erroLocal = value ? validarKM(value) : null;
-  const erroFinal = erro || erroLocal;
-  const temErro = !!erroFinal;
+  const valido = parteKm.length === 3 && parteMetros.length === 3;
+  const temErro = !!erro;
 
   return (
     <div className="flex flex-col gap-1">
@@ -83,64 +70,74 @@ export default function KMInput({
         {obrigatorio && <span className="text-red-500 ml-1">*</span>}
       </label>
 
-      {/* Input */}
-      <div className="relative">
+      {/* Dois campos lado a lado */}
+      <div className={`
+        flex items-center gap-0 rounded-xl border-2 overflow-hidden bg-white
+        ${temErro ? "border-red-400" : valido ? "border-green-500" : "border-gray-300"}
+      `}>
+        {/* Campo KM */}
         <input
-          ref={inputRef}
+          ref={refKm}
           type="text"
-          inputMode="numeric"     // abre teclado numérico no celular
+          inputMode="numeric"
           pattern="\d*"
-          value={value}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          onPaste={handlePaste}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          maxLength={3}
+          value={parteKm}
+          onChange={handleKmChange}
+          placeholder="000"
           className={`
-            w-full text-center text-2xl font-bold tracking-widest
-            border-2 rounded-xl px-4 py-4
-            transition-all duration-150
-            ${focado
-              ? "border-green-500 bg-green-50 ring-2 ring-green-200"
-              : temErro
-              ? "border-red-400 bg-red-50"
-              : value
-              ? "border-green-400 bg-white"
-              : "border-gray-300 bg-gray-50"
-            }
-            focus:outline-none
-            placeholder:text-gray-300 placeholder:font-normal placeholder:text-xl
+            w-full text-center text-3xl font-bold py-4
+            focus:outline-none focus:bg-green-50
+            placeholder:text-gray-300 placeholder:font-normal placeholder:text-2xl
+            bg-transparent
           `}
-          style={{ letterSpacing: "0.2em" }}
         />
 
-        {/* Indicador de formato */}
-        {!focado && !value && (
-          <div className="absolute bottom-1 right-3 text-xs text-gray-400">
-            ex: 142,941
-          </div>
-        )}
+        {/* Separador vírgula */}
+        <span className="text-4xl font-bold text-gray-400 px-1 select-none">,</span>
 
-        {/* Check verde quando válido */}
-        {value && !temErro && !focado && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-xl">
-            ✓
-          </div>
-        )}
+        {/* Campo metros */}
+        <input
+          ref={refMetros}
+          type="text"
+          inputMode="numeric"
+          pattern="\d*"
+          maxLength={3}
+          value={parteMetros}
+          onChange={handleMetrosChange}
+          onKeyDown={handleMetrosKeyDown}
+          placeholder="000"
+          className={`
+            w-full text-center text-3xl font-bold py-4
+            focus:outline-none focus:bg-green-50
+            placeholder:text-gray-300 placeholder:font-normal placeholder:text-2xl
+            bg-transparent
+          `}
+        />
+
+        {/* Ícone de validação */}
+        <div className="pr-3">
+          {valido && !temErro && (
+            <span className="text-green-500 text-xl">✓</span>
+          )}
+          {temErro && (
+            <span className="text-red-400 text-xl">!</span>
+          )}
+        </div>
       </div>
 
-      {/* Dica de uso */}
-      {focado && (
-        <p className="text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2 border border-green-200">
-          💡 Digite só os números. A vírgula é colocada automaticamente.
-        </p>
-      )}
+      {/* Legenda dos campos */}
+      <div className="flex text-xs text-gray-400 px-1">
+        <span className="flex-1 text-center">quilômetro</span>
+        <span className="w-6" />
+        <span className="flex-1 text-center">metros</span>
+        <span className="w-8" />
+      </div>
 
-      {/* Mensagem de erro */}
+      {/* Erro */}
       {temErro && (
-        <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 border border-red-200 flex items-center gap-1">
-          <span>⚠️</span> {erroFinal}
+        <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 border border-red-200">
+          ⚠️ {erro}
         </p>
       )}
     </div>
