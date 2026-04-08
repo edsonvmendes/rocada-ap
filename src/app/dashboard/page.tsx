@@ -95,15 +95,34 @@ function calcTotaisLinha(r: LinhaPlanilha) {
   };
 }
 
+function dataValida(date: Date): boolean {
+  return !Number.isNaN(date.getTime());
+}
+
+function formatarDateParaISO(date: Date): string {
+  const ano = date.getFullYear();
+  const mes = String(date.getMonth() + 1).padStart(2, "0");
+  const dia = String(date.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 // Converte data do formato brasileiro (dd/mm/aaaa) para ISO (aaaa-mm-dd)
 function dataParaISO(data: string): string {
   if (!data) return "";
+  const valor = data.trim();
+
   // Já está em ISO
-  if (/^\d{4}-\d{2}-\d{2}/.test(data)) return data.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}/.test(valor)) return valor.slice(0, 10);
+
   // dd/mm/aaaa
-  const partes = data.split("/");
-  if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
-  return data.slice(0, 10);
+  const partesBR = valor.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (partesBR) return `${partesBR[3]}-${partesBR[2]}-${partesBR[1]}`;
+
+  // Datas serializadas pelo Apps Script / Google Sheets
+  const tentativa = new Date(valor);
+  if (dataValida(tentativa)) return formatarDateParaISO(tentativa);
+
+  return "";
 }
 
 function formatKM(km: number) {
@@ -117,7 +136,9 @@ function formatArea(area: number) {
 
 function formatDataExib(iso: string) {
   if (!iso) return "—";
-  return new Date(iso + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return "—";
+  return `${match[3]}/${match[2]}`;
 }
 
 function KPICard({ label, valor, sub, cor }: { label: string; valor: string; sub?: string; cor: string }) {
@@ -175,7 +196,7 @@ export default function PaginaDashboard() {
     return dados.filter((r) => {
       const iso = dataParaISO(r.data);
       if (!iso) return true;
-      return new Date(iso) >= limite;
+      return new Date(`${iso}T12:00:00`) >= limite;
     });
   }, [dados, periodo]);
 
