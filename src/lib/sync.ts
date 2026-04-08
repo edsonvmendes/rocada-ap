@@ -8,14 +8,26 @@ import { buscarPendentes, buscarComErro, atualizarStatusSync } from "./db";
 import { RelatorioCompleto } from "@/types";
 import { parseKM } from "./kmUtils";
 
+export const DEFAULT_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbz3Maq_WqHuUbNIB8lfBzJSXQHHL8YFmakRiZHJzOxBf9lW-bgjd4DulkX1Ikc0DYU7/exec";
+
+function normalizarScriptUrl(url: string | null): string | null {
+  const valor = url?.trim();
+  return valor ? valor : null;
+}
+
 // URL do Google Apps Script (configurada pelo admin no localStorage)
 export function getScriptUrl(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("gas_url");
+  const configurada = normalizarScriptUrl(localStorage.getItem("gas_url"));
+  if (configurada) return configurada;
+  localStorage.setItem("gas_url", DEFAULT_SCRIPT_URL);
+  return DEFAULT_SCRIPT_URL;
 }
 
 export function setScriptUrl(url: string): void {
-  localStorage.setItem("gas_url", url);
+  const configurada = normalizarScriptUrl(url) ?? DEFAULT_SCRIPT_URL;
+  localStorage.setItem("gas_url", configurada);
 }
 
 // Converte o relatório para o formato de linha do Google Sheets
