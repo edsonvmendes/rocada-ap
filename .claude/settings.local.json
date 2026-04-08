@@ -3,7 +3,11 @@
     "allow": [
       "WebFetch(domain:docs.google.com)",
       "Bash(npx create-next-app@latest rocada-app --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
