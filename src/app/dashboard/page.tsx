@@ -5,6 +5,7 @@
 // ============================================================
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { getScriptUrl } from "@/lib/sync";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -254,9 +255,9 @@ export default function PaginaDashboard() {
             >
               {carregando ? "⏳" : "🔄"} Atualizar
             </button>
-            <a href="/" className="bg-green-600 text-white text-xs px-3 py-2 rounded-xl font-bold">
+            <Link href="/" className="bg-green-600 text-white text-xs px-3 py-2 rounded-xl font-bold">
               📋 Form
-            </a>
+            </Link>
           </div>
         </div>
       </header>
@@ -269,9 +270,9 @@ export default function PaginaDashboard() {
             <p className="text-3xl mb-2">⚠️</p>
             <p className="font-bold text-red-700 mb-1">Sem conexão com a planilha</p>
             <p className="text-sm text-red-600">{erro}</p>
-            <a href="/admin" className="mt-3 inline-block bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold">
+            <Link href="/admin" className="mt-3 inline-block bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold">
               Ir para Admin
-            </a>
+            </Link>
           </div>
         )}
 

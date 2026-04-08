@@ -5,6 +5,7 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { AdminConfig } from "@/types";
 import { getAdminConfig, saveAdminConfig } from "@/lib/adminConfig";
 import { CONFIG_PADRAO } from "@/lib/adminConfig";
@@ -35,17 +36,16 @@ export default function PaginaAdmin() {
   const [abaSelecionada, setAbaSelecionada] = useState<"listas" | "integracao">("listas");
 
   useEffect(() => {
-    getAdminConfig().then((c) => {
+    Promise.all([getAdminConfig(), Promise.resolve(getScriptUrl())]).then(([c, url]) => {
       setConfig(c);
+      if (url) setScriptUrlState(url);
       setCarregando(false);
     });
-    const url = getScriptUrl();
-    if (url) setScriptUrlState(url);
   }, []);
 
   const salvar = async () => {
     await saveAdminConfig(config);
-    if (scriptUrl) setScriptUrl(scriptUrl);
+    setScriptUrl(scriptUrl.trim());
     setSalvo(true);
     setTimeout(() => setSalvo(false), 2500);
   };
@@ -101,9 +101,9 @@ export default function PaginaAdmin() {
             <h1 className="font-bold text-lg">⚙️ Painel Admin</h1>
             <p className="text-gray-400 text-xs">Gerenciamento do sistema</p>
           </div>
-          <a href="/" className="bg-green-600 text-white text-sm px-3 py-2 rounded-xl font-bold">
+          <Link href="/" className="bg-green-600 text-white text-sm px-3 py-2 rounded-xl font-bold">
             ← Formulário
-          </a>
+          </Link>
         </div>
       </header>
 

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { RelatorioCompleto } from "@/types";
 import { RELATORIO_VAZIO } from "@/lib/constants";
 import { salvarRelatorio } from "@/lib/db";
+import { parseKM, validarKM } from "@/lib/kmUtils";
 import { useAdminConfig } from "@/hooks/useAdminConfig";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 import SecaoInfoGeral from "@/components/form/SecaoInfoGeral";
@@ -19,6 +20,43 @@ import ResumoTotais from "@/components/form/ResumoTotais";
 
 type FormData = Omit<RelatorioCompleto, "id" | "syncStatus" | "criadoEm">;
 
+function validarSecaoKM(
+  titulo: string,
+  dados: {
+    rodovia?: string;
+    canteiro?: string;
+    kmInicial: string;
+    kmFinal: string;
+    largura: number;
+  }
+): string[] {
+  const erros: string[] = [];
+  const temAlgumDado = Boolean(
+    dados.rodovia || dados.canteiro || dados.kmInicial || dados.kmFinal || dados.largura > 0
+  );
+
+  if (!temAlgumDado) return erros;
+
+  if (!dados.rodovia) erros.push(`${titulo}: rodovia é obrigatória`);
+  if (!dados.canteiro) erros.push(`${titulo}: canteiro/lateral é obrigatório`);
+
+  const erroKmInicial = validarKM(dados.kmInicial);
+  if (erroKmInicial) erros.push(`${titulo}: KM inicial inválido`);
+
+  const erroKmFinal = validarKM(dados.kmFinal);
+  if (erroKmFinal) erros.push(`${titulo}: KM final inválido`);
+
+  if (!dados.largura || dados.largura <= 0) {
+    erros.push(`${titulo}: largura média deve ser maior que zero`);
+  }
+
+  if (!erroKmInicial && !erroKmFinal && parseKM(dados.kmFinal) <= parseKM(dados.kmInicial)) {
+    erros.push(`${titulo}: KM final deve ser maior que o KM inicial`);
+  }
+
+  return erros;
+}
+
 function validarFormulario(dados: FormData): string[] {
   const erros: string[] = [];
   if (!dados.infoGeral.data) erros.push("Data é obrigatória");
@@ -26,7 +64,34 @@ function validarFormulario(dados: FormData): string[] {
   if (!dados.infoGeral.supervisor) erros.push("Supervisor é obrigatório");
   if (!dados.infoGeral.encarregado) erros.push("Encarregado é obrigatório");
   if (!dados.infoGeral.equipe) erros.push("Equipe é obrigatória");
+  if (!dados.infoGeral.transporte) erros.push("Transporte é obrigatório");
   if (!dados.infoGeral.condicoesTrabalho) erros.push("Condições de trabalho são obrigatórias");
+
+  erros.push(...validarSecaoKM("Roçada Manual", dados.rocadaManual));
+
+  if (dados.tratorA.ativo) {
+    if (!dados.tratorA.prefixo) erros.push("Trator A: prefixo é obrigatório");
+    if (!dados.tratorA.tipoRocadeira) erros.push("Trator A: tipo de roçadeira é obrigatório");
+    erros.push(...validarSecaoKM("Trator A", dados.tratorA));
+  }
+
+  if (dados.tratorB.ativo) {
+    if (!dados.tratorB.prefixo) erros.push("Trator B: prefixo é obrigatório");
+    if (!dados.tratorB.tipoRocadeira) erros.push("Trator B: tipo de roçadeira é obrigatório");
+    erros.push(...validarSecaoKM("Trator B", dados.tratorB));
+  }
+
+  if (dados.tratorC.ativo) {
+    if (!dados.tratorC.prefixo) erros.push("Trator C: prefixo é obrigatório");
+    if (!dados.tratorC.tipoRocadeira) erros.push("Trator C: tipo de roçadeira é obrigatório");
+    erros.push(...validarSecaoKM("Trator C", dados.tratorC));
+  }
+
+  if (dados.robo.ativo) {
+    if (!dados.robo.tipo) erros.push("Robô: tipo é obrigatório");
+    erros.push(...validarSecaoKM("Robô", dados.robo));
+  }
+
   return erros;
 }
 

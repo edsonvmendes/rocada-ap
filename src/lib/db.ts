@@ -7,6 +7,10 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import { RelatorioCompleto, AdminConfig } from "@/types";
 
+interface AdminConfigRecord extends AdminConfig {
+  id: string;
+}
+
 // Schema do banco local
 interface RocadaDB extends DBSchema {
   relatorios: {
@@ -16,7 +20,7 @@ interface RocadaDB extends DBSchema {
   };
   config: {
     key: string;
-    value: AdminConfig;
+    value: AdminConfigRecord;
   };
 }
 
@@ -37,7 +41,7 @@ async function getDB(): Promise<IDBPDatabase<RocadaDB>> {
       store.createIndex("por-data", "criadoEm");
 
       // Store de configuração do admin
-      db.createObjectStore("config", { keyPath: "id" } as any);
+      db.createObjectStore("config", { keyPath: "id" });
     },
   });
 
@@ -107,7 +111,7 @@ const CONFIG_KEY = "admin_config";
 // Salva configuração do admin
 export async function salvarConfig(config: AdminConfig): Promise<void> {
   const db = await getDB();
-  await db.put("config", { ...config, id: CONFIG_KEY } as any);
+  await db.put("config", { ...config, id: CONFIG_KEY });
 }
 
 // Carrega configuração do admin
@@ -115,6 +119,7 @@ export async function carregarConfig(): Promise<AdminConfig | null> {
   const db = await getDB();
   const result = await db.get("config", CONFIG_KEY);
   if (!result) return null;
-  const { id: _id, ...config } = result as any;
-  return config as AdminConfig;
+  const { id: configId, ...config } = result;
+  void configId;
+  return config;
 }
