@@ -19,7 +19,7 @@ export default function SecaoFechamento({ dados, onChange }: Props) {
     <SectionCard titulo="Fechamento do Dia" icone="🏁" cor="gray">
 
       {/* Hora de Término */}
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1 overflow-hidden">
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Horário de Término
         </label>
@@ -28,7 +28,7 @@ export default function SecaoFechamento({ dados, onChange }: Props) {
           value={dados.horaTermino}
           onChange={(e) => set("horaTermino", e.target.value)}
           className={`
-            w-full min-w-0 max-w-full text-base font-bold border-2 rounded-xl px-4 py-4 sm:text-xl
+            block w-full min-w-0 max-w-full overflow-hidden text-base font-bold border-2 rounded-xl px-3 py-4 sm:px-4 sm:text-xl
             focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200
             ${dados.horaTermino ? "border-green-400 bg-white" : "border-gray-300 bg-gray-50"}
           `}

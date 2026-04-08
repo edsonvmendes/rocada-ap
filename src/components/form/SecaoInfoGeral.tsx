@@ -23,7 +23,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
   return (
     <SectionCard titulo="Informações Gerais" icone="📋" cor="green">
       {/* Data */}
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1 overflow-hidden">
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Data <span className="text-red-500">*</span>
         </label>
@@ -32,7 +32,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
           value={dados.data}
           onChange={(e) => set("data", e.target.value)}
           className={`
-            w-full min-w-0 max-w-full text-base font-bold border-2 rounded-xl px-4 py-4 sm:text-xl
+            block w-full min-w-0 max-w-full overflow-hidden text-base font-bold border-2 rounded-xl px-3 py-4 sm:px-4 sm:text-xl
             focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200
             ${erros.data ? "border-red-400 bg-red-50" : dados.data ? "border-green-400" : "border-gray-300 bg-gray-50"}
           `}
@@ -41,7 +41,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
       </div>
 
       {/* Hora Início */}
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1 overflow-hidden">
         <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
           Hora de Início <span className="text-red-500">*</span>
         </label>
@@ -50,7 +50,7 @@ export default function SecaoInfoGeral({ dados, onChange, config, erros = {} }: 
           value={dados.horaInicio}
           onChange={(e) => set("horaInicio", e.target.value)}
           className={`
-            w-full min-w-0 max-w-full text-base font-bold border-2 rounded-xl px-4 py-4 sm:text-xl
+            block w-full min-w-0 max-w-full overflow-hidden text-base font-bold border-2 rounded-xl px-3 py-4 sm:px-4 sm:text-xl
             focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200
             ${erros.horaInicio ? "border-red-400 bg-red-50" : dados.horaInicio ? "border-green-400" : "border-gray-300 bg-gray-50"}
           `}
