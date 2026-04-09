@@ -94,10 +94,7 @@ export function calcularArea(kmProduzido: number, largura: number): number {
  * Formata área para exibição
  */
 export function formatarArea(area: number): string {
-  if (area >= 10000) {
-    return `${(area / 10000).toFixed(2)} ha`;
-  }
-  return `${area.toFixed(0)} m²`;
+  return `${area.toFixed(0)} m2`;
 }
 
 /**

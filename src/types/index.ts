@@ -108,9 +108,4 @@ export interface AdminConfig {
   tiposRocadeira: string[];
   tiposRobo: string[];
   condicoesTrabalho: string[];
-  custosReferencia: {
-    diesel: number;
-    gasolina: number;
-    oleo2T: number;
-  };
 }

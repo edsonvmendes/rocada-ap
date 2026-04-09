@@ -13,6 +13,7 @@ interface NumberFieldProps {
   sufixo?: string;
   min?: number;
   max?: number;
+  mostrarZero?: boolean;
 }
 
 export default function NumberField({
@@ -25,6 +26,7 @@ export default function NumberField({
   sufixo,
   min = 0,
   max,
+  mostrarZero = false,
 }: NumberFieldProps) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
@@ -41,7 +43,7 @@ export default function NumberField({
       <input
         type="number"
         inputMode={decimais ? "decimal" : "numeric"}
-        value={value === 0 ? "" : value}
+        value={value === 0 && !mostrarZero ? "" : value}
         onChange={(e) => {
           const val = decimais
             ? parseFloat(e.target.value)
