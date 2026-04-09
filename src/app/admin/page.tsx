@@ -18,7 +18,7 @@ type ListaKey =
   | "tiposRobo"
   | "condicoesTrabalho";
 
-type AbaKey = "listas" | "integracao" | "custos";
+type AbaKey = "listas" | "integracao";
 
 const LISTAS: { key: ListaKey; label: string; icone: string }[] = [
   { key: "supervisores", label: "Supervisores", icone: "SG" },
@@ -89,7 +89,7 @@ export default function PaginaAdmin() {
   };
 
   const restaurarPadrao = async () => {
-    if (!confirm("Restaurar todas as listas e custos padrao?")) return;
+    if (!confirm("Restaurar todas as listas padrao?")) return;
     setConfig(CONFIG_PADRAO);
     setScriptUrlState(getScriptUrl() || "");
     await saveAdminConfig(CONFIG_PADRAO);
@@ -125,17 +125,6 @@ export default function PaginaAdmin() {
     setConfig((atual) => ({ ...atual, [lista]: itens }));
   };
 
-  const atualizarCusto = (campo: keyof AdminConfig["custosReferencia"], valor: string) => {
-    const numero = parseFloat(valor);
-    setConfig((atual) => ({
-      ...atual,
-      custosReferencia: {
-        ...atual.custosReferencia,
-        [campo]: Number.isNaN(numero) ? 0 : numero,
-      },
-    }));
-  };
-
   if (carregando) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -162,10 +151,9 @@ export default function PaginaAdmin() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-4 flex flex-col gap-4 pb-20">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <AbaButton ativa={abaSelecionada === "listas"} onClick={() => setAbaSelecionada("listas")} label="Listas" />
           <AbaButton ativa={abaSelecionada === "integracao"} onClick={() => setAbaSelecionada("integracao")} label="Integracao" />
-          <AbaButton ativa={abaSelecionada === "custos"} onClick={() => setAbaSelecionada("custos")} label="Custos" />
         </div>
 
         {abaSelecionada === "listas" && (
@@ -299,65 +287,6 @@ export default function PaginaAdmin() {
                 <p className="text-xs text-green-600 break-all mt-1">{scriptUrl}</p>
               </div>
             )}
-          </div>
-        )}
-
-        {abaSelecionada === "custos" && (
-          <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 flex flex-col gap-4">
-            <div>
-              <h2 className="font-bold text-gray-800 text-lg mb-1">Custos de referencia</h2>
-              <p className="text-sm text-gray-500">
-                Esses valores abastecem o dashboard para calcular custo por km e custo por m2.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Diesel (R$/L)</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={config.custosReferencia.diesel}
-                  onChange={(e) => atualizarCusto("diesel", e.target.value)}
-                  className="border-2 border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Gasolina (R$/L)</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={config.custosReferencia.gasolina}
-                  onChange={(e) => atualizarCusto("gasolina", e.target.value)}
-                  className="border-2 border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Oleo 2T (R$/L)</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={config.custosReferencia.oleo2T}
-                  onChange={(e) => atualizarCusto("oleo2T", e.target.value)}
-                  className="border-2 border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-600"
-                />
-              </div>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-sm font-semibold text-amber-800 mb-1">Uso no dashboard</p>
-              <p className="text-xs text-amber-700">
-                Se esses custos ficarem zerados, os rankings de custo por m2 e custo por km ficam distorcidos.
-              </p>
-            </div>
           </div>
         )}
 

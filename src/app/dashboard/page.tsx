@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useAdminConfig } from "@/hooks/useAdminConfig";
 import { buildScriptUrl, getScriptUrl } from "@/lib/sync";
 import {
   Bar,
@@ -69,21 +68,35 @@ interface LinhaPlanilha {
   consideracoes_gerais: string;
 }
 
-interface Equipamento { categoria: "manual" | "trator" | "robo"; nome: string; rodovia: string; canteiro: string; km: number; area: number; combustivel: number; custo: number; }
-interface Linha { id: string; isoDate: string; equipe: string; supervisor: string; teamSize: number; horas: number; totalKm: number; totalArea: number; totalCombustivel: number; totalCusto: number; productive: boolean; rain: boolean; traffic: boolean; failure: boolean; equipment: Equipamento[]; }
+interface Equipamento { categoria: "manual" | "trator" | "robo"; nome: string; rodovia: string; canteiro: string; km: number; area: number; combustivel: number; }
+interface Linha { id: string; isoDate: string; equipe: string; supervisor: string; teamSize: number; horas: number; totalKm: number; totalArea: number; totalCombustivel: number; productive: boolean; rain: boolean; traffic: boolean; failure: boolean; equipment: Equipamento[]; }
 type Periodo = "7" | "30" | "90" | "todos";
 type Granularidade = "dia" | "semana" | "mes";
 type TipoTrabalho = "todos" | "manual" | "trator" | "robo";
+
+const MESES = [
+  { valor: "01", label: "Janeiro" },
+  { valor: "02", label: "Fevereiro" },
+  { valor: "03", label: "Marco" },
+  { valor: "04", label: "Abril" },
+  { valor: "05", label: "Maio" },
+  { valor: "06", label: "Junho" },
+  { valor: "07", label: "Julho" },
+  { valor: "08", label: "Agosto" },
+  { valor: "09", label: "Setembro" },
+  { valor: "10", label: "Outubro" },
+  { valor: "11", label: "Novembro" },
+  { valor: "12", label: "Dezembro" },
+];
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ");
 const num = (v?: string) => { const s = (v || "").trim(); if (!s) return 0; if (/^-?\d+,\d+$/.test(s)) return parseFloat(s.replace(",", ".")) || 0; return parseFloat(s.replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".")) || 0; };
 const km = (v?: string) => { const s = (v || "").replace(/\s/g, ""); if (!s) return 0; if (s.includes(",")) return parseFloat(s.replace(",", ".")) || 0; if (s.length === 6 && /^\d+$/.test(s)) return parseFloat(`${s.slice(0,3)}.${s.slice(3)}`) || 0; return parseFloat(s) || 0; };
 const kmProd = (a?: string, b?: string) => Math.max(0, km(b) - km(a));
-const fmtArea = (v: number) => !v || v <= 0 ? "0 m2" : v >= 10000 ? `${(v / 10000).toFixed(2)} ha` : `${v.toFixed(0)} m2`;
+const fmtArea = (v: number) => !v || v <= 0 ? "0 m2" : `${v.toFixed(0)} m2`;
 const fmtAxisArea = (v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${Math.round(v)}`;
 const fmtKm = (v: number) => `${v.toFixed(3).replace(".", ",")} km`;
 const fmtRate = (v: number, d = 1) => (Number.isFinite(v) && v > 0 ? v.toFixed(d).replace(".", ",") : "0");
-const fmtCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: v >= 1000 ? 0 : 2 }).format(v || 0);
 const rankColor = (i: number, total: number) => i === 0 ? "#15803d" : i === total - 1 ? "#dc2626" : "#2563eb";
 const text = (v?: string) => (v || "").trim();
 const valid = (date: Date) => !Number.isNaN(date.getTime());
@@ -101,7 +114,7 @@ const periodLabel = (v: string, g: Granularidade) => g === "dia" ? dateLabel(v) 
 const hasTerm = (v: string, terms: string[]) => terms.some((term) => v.includes(term));
 const horas = (a?: string, b?: string) => { const s = (a || "").match(/^(\d{2}):(\d{2})$/); const e = (b || "").match(/^(\d{2}):(\d{2})$/); if (!s || !e) return 0; const mi = parseInt(s[1], 10) * 60 + parseInt(s[2], 10); const mf = parseInt(e[1], 10) * 60 + parseInt(e[2], 10); return mf > mi ? (mf - mi) / 60 : 0; };
 
-function makeRow(row: LinhaPlanilha, index: number, custos: { diesel: number; gasolina: number; oleo2T: number }): Linha {
+function makeRow(row: LinhaPlanilha, index: number): Linha {
   const teamSize = num(row.qtd_lideres) + num(row.qtd_op_trator) + num(row.qtd_op_equipamento) + num(row.qtd_op_rocadeira) + num(row.qtd_ajudantes);
   const manualKm = kmProd(row.manual_km_inicial, row.manual_km_final);
   const manualArea = manualKm * 1000 * num(row.manual_largura);
@@ -115,15 +128,14 @@ function makeRow(row: LinhaPlanilha, index: number, custos: { diesel: number; ga
   const diesel = num(row.diesel_tratores);
   const gasManual = num(row.gasolina_manual);
   const gasRobo = num(row.gasolina_robo);
-  const oil = num(row.oleo_2t);
   const tractorsArea = tractors.reduce((sum, item) => sum + item.area, 0);
   const tractorsKm = tractors.reduce((sum, item) => sum + item.km, 0);
   const equipamentos: Equipamento[] = [];
-  if (manualArea > 0 || manualKm > 0 || text(row.manual_rodovia)) equipamentos.push({ categoria: "manual", nome: "Manual", rodovia: text(row.manual_rodovia) || "Sem rodovia", canteiro: text(row.manual_canteiro) || "Sem canteiro", km: manualKm, area: manualArea, combustivel: gasManual, custo: gasManual * custos.gasolina + oil * custos.oleo2T });
-  tractors.forEach((item) => { const share = tractorsArea > 0 ? item.area / tractorsArea : tractorsKm > 0 ? item.km / tractorsKm : 1 / Math.max(tractors.length, 1); const litros = diesel * share; equipamentos.push({ categoria: "trator", nome: item.nome, rodovia: item.rodovia || "Sem rodovia", canteiro: item.canteiro || "Sem canteiro", km: item.km, area: item.area, combustivel: litros, custo: litros * custos.diesel }); });
-  if (robotArea > 0 || robotKm > 0 || text(row.robo_tipo)) equipamentos.push({ categoria: "robo", nome: text(row.robo_tipo) || "Robo", rodovia: text(row.robo_rodovia) || "Sem rodovia", canteiro: text(row.robo_canteiro) || "Sem canteiro", km: robotKm, area: robotArea, combustivel: gasRobo, custo: gasRobo * custos.gasolina });
+  if (manualArea > 0 || manualKm > 0 || text(row.manual_rodovia)) equipamentos.push({ categoria: "manual", nome: "Manual", rodovia: text(row.manual_rodovia) || "Sem rodovia", canteiro: text(row.manual_canteiro) || "Sem canteiro", km: manualKm, area: manualArea, combustivel: gasManual });
+  tractors.forEach((item) => { const share = tractorsArea > 0 ? item.area / tractorsArea : tractorsKm > 0 ? item.km / tractorsKm : 1 / Math.max(tractors.length, 1); const litros = diesel * share; equipamentos.push({ categoria: "trator", nome: item.nome, rodovia: item.rodovia || "Sem rodovia", canteiro: item.canteiro || "Sem canteiro", km: item.km, area: item.area, combustivel: litros }); });
+  if (robotArea > 0 || robotKm > 0 || text(row.robo_tipo)) equipamentos.push({ categoria: "robo", nome: text(row.robo_tipo) || "Robo", rodovia: text(row.robo_rodovia) || "Sem rodovia", canteiro: text(row.robo_canteiro) || "Sem canteiro", km: robotKm, area: robotArea, combustivel: gasRobo });
   const cond = `${text(row.condicoes)} ${text(row.consideracoes_gerais)}`.toLowerCase();
-  return { id: `${row.carimbo || row.data}-${index}`, isoDate: iso(row.data), equipe: text(row.equipe) || "Sem equipe", supervisor: text(row.supervisor) || "Sem coordenador", teamSize, horas: horas(row.hora_inicio, row.hora_termino), totalKm: equipamentos.reduce((s, item) => s + item.km, 0), totalArea: equipamentos.reduce((s, item) => s + item.area, 0), totalCombustivel: equipamentos.reduce((s, item) => s + item.combustivel, 0), totalCusto: equipamentos.reduce((s, item) => s + item.custo, 0), productive: equipamentos.some((item) => item.area > 0), rain: hasTerm(cond, ["chuva", "chuv", "garoa"]), traffic: hasTerm(cond, ["trafego", "transito", "trânsito", "veiculo"]), failure: hasTerm(cond, ["falha", "quebra", "manutenc", "pane", "defeito"]), equipment: equipamentos };
+  return { id: `${row.carimbo || row.data}-${index}`, isoDate: iso(row.data), equipe: text(row.equipe) || "Sem equipe", supervisor: text(row.supervisor) || "Sem coordenador", teamSize, horas: horas(row.hora_inicio, row.hora_termino), totalKm: equipamentos.reduce((s, item) => s + item.km, 0), totalArea: equipamentos.reduce((s, item) => s + item.area, 0), totalCombustivel: equipamentos.reduce((s, item) => s + item.combustivel, 0), productive: equipamentos.some((item) => item.area > 0), rain: hasTerm(cond, ["chuva", "chuv", "garoa"]), traffic: hasTerm(cond, ["trafego", "transito", "trânsito", "veiculo"]), failure: hasTerm(cond, ["falha", "quebra", "manutenc", "pane", "defeito"]), equipment: equipamentos };
 }
 
 function Card({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
@@ -135,13 +147,15 @@ function Kpi({ label, value, note, tone }: { label: string; value: string; note:
 }
 
 export default function PaginaDashboard() {
-  const { config, carregando: carregandoConfig } = useAdminConfig();
   const [dados, setDados] = useState<LinhaPlanilha[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [atualizadoEm, setAtualizadoEm] = useState<string | null>(null);
   const [periodo, setPeriodo] = useState<Periodo>("30");
   const [granularidade, setGranularidade] = useState<Granularidade>("semana");
+  const [anoSelecionado, setAnoSelecionado] = useState("todos");
+  const [mesSelecionado, setMesSelecionado] = useState("todos");
+  const [diaSelecionado, setDiaSelecionado] = useState("todos");
   const [rodoviaSelecionada, setRodoviaSelecionada] = useState("todas");
   const [equipeSelecionada, setEquipeSelecionada] = useState("todas");
   const [tratorSelecionado, setTratorSelecionado] = useState("todos");
@@ -174,11 +188,41 @@ export default function PaginaDashboard() {
 
   useEffect(() => { void carregar(); }, []);
 
-  const custos = config.custosReferencia;
-  const linhas = useMemo(() => dados.map((item, index) => makeRow(item, index, custos)), [dados, custos]);
+  const linhas = useMemo(() => dados.map((item, index) => makeRow(item, index)), [dados]);
+  const anos = useMemo(() => {
+    return Array.from(
+      new Set(
+        linhas
+          .map((linha) => linha.isoDate.slice(0, 4))
+          .filter(Boolean)
+      )
+    ).sort((a, b) => b.localeCompare(a));
+  }, [linhas]);
+  const dias = useMemo(() => {
+    return Array.from(
+      new Set(
+        linhas
+          .filter((linha) => {
+            if (!linha.isoDate) return false;
+            const [ano, mes] = linha.isoDate.split("-");
+            if (anoSelecionado !== "todos" && ano !== anoSelecionado) return false;
+            if (mesSelecionado !== "todos" && mes !== mesSelecionado) return false;
+            return true;
+          })
+          .map((linha) => linha.isoDate.slice(8, 10))
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [anoSelecionado, linhas, mesSelecionado]);
   const rodovias = useMemo(() => Array.from(new Set(linhas.flatMap((linha) => linha.equipment.map((item) => item.rodovia)))).sort((a, b) => a.localeCompare(b)), [linhas]);
   const equipes = useMemo(() => Array.from(new Set(linhas.map((linha) => linha.equipe))).sort((a, b) => a.localeCompare(b)), [linhas]);
   const tratores = useMemo(() => Array.from(new Set(linhas.flatMap((linha) => linha.equipment.filter((item) => item.categoria === "trator").map((item) => item.nome)))).sort((a, b) => a.localeCompare(b)), [linhas]);
+
+  useEffect(() => {
+    if (diaSelecionado !== "todos" && !dias.includes(diaSelecionado)) {
+      setDiaSelecionado("todos");
+    }
+  }, [diaSelecionado, dias]);
 
   const dimensionadas = useMemo(() => linhas.filter((linha) => {
     const okRoad = rodoviaSelecionada === "todas" || linha.equipment.some((item) => item.rodovia === rodoviaSelecionada);
@@ -189,20 +233,35 @@ export default function PaginaDashboard() {
   }), [equipeSelecionada, linhas, rodoviaSelecionada, tipoTrabalho, tratorSelecionado]);
 
   const filtradas = useMemo(() => {
-    if (periodo === "todos") return dimensionadas;
-    const limite = new Date();
-    limite.setHours(0, 0, 0, 0);
-    limite.setDate(limite.getDate() - (parseInt(periodo, 10) - 1));
-    return dimensionadas.filter((linha) => linha.isoDate && new Date(`${linha.isoDate}T12:00:00`) >= limite);
-  }, [dimensionadas, periodo]);
+    return dimensionadas.filter((linha) => {
+      if (!linha.isoDate) return false;
+
+      const [ano, mes, dia] = linha.isoDate.split("-");
+
+      if (anoSelecionado !== "todos" && ano !== anoSelecionado) return false;
+      if (mesSelecionado !== "todos" && mes !== mesSelecionado) return false;
+      if (diaSelecionado !== "todos" && dia !== diaSelecionado) return false;
+
+      const dataEspecifica =
+        anoSelecionado !== "todos" ||
+        mesSelecionado !== "todos" ||
+        diaSelecionado !== "todos";
+
+      if (dataEspecifica || periodo === "todos") return true;
+
+      const limite = new Date();
+      limite.setHours(0, 0, 0, 0);
+      limite.setDate(limite.getDate() - (parseInt(periodo, 10) - 1));
+
+      return new Date(`${linha.isoDate}T12:00:00`) >= limite;
+    });
+  }, [anoSelecionado, diaSelecionado, dimensionadas, mesSelecionado, periodo]);
 
   const totalArea = filtradas.reduce((sum, linha) => sum + linha.totalArea, 0);
   const totalKm = filtradas.reduce((sum, linha) => sum + linha.totalKm, 0);
   const totalCombustivel = filtradas.reduce((sum, linha) => sum + linha.totalCombustivel, 0);
-  const totalCusto = filtradas.reduce((sum, linha) => sum + linha.totalCusto, 0);
   const totalOperadores = filtradas.reduce((sum, linha) => sum + linha.teamSize, 0);
   const m2PorOperador = totalOperadores > 0 ? totalArea / totalOperadores : 0;
-  const custoPorM2 = totalArea > 0 ? totalCusto / totalArea : 0;
   const combustivelPorM2 = totalArea > 0 ? totalCombustivel / totalArea : 0;
 
   const diasComparacao = periodo === "todos" ? 30 : parseInt(periodo, 10);
@@ -232,10 +291,10 @@ export default function PaginaDashboard() {
   }, [filtradas, granularidade]);
 
   const byTeam = useMemo(() => {
-    const mapa = new Map<string, { area: number; km: number; fuel: number; cost: number; operators: number; reports: number }>();
+    const mapa = new Map<string, { area: number; km: number; fuel: number; operators: number; reports: number }>();
     filtradas.forEach((linha) => {
-      const atual = mapa.get(linha.equipe) || { area: 0, km: 0, fuel: 0, cost: 0, operators: 0, reports: 0 };
-      atual.area += linha.totalArea; atual.km += linha.totalKm; atual.fuel += linha.totalCombustivel; atual.cost += linha.totalCusto; atual.operators += linha.teamSize; atual.reports += 1; mapa.set(linha.equipe, atual);
+      const atual = mapa.get(linha.equipe) || { area: 0, km: 0, fuel: 0, operators: 0, reports: 0 };
+      atual.area += linha.totalArea; atual.km += linha.totalKm; atual.fuel += linha.totalCombustivel; atual.operators += linha.teamSize; atual.reports += 1; mapa.set(linha.equipe, atual);
     });
     return Array.from(mapa.entries()).map(([nome, v]) => ({ nome, area: Math.round(v.area), m2PorOperador: v.operators > 0 ? v.area / v.operators : 0, fuelPerKm: v.km > 0 ? v.fuel / v.km : 0, teamSize: v.reports > 0 ? v.operators / v.reports : 0, areaPorRelatorio: v.reports > 0 ? v.area / v.reports : 0 })).sort((a, b) => b.area - a.area);
   }, [filtradas]);
@@ -253,15 +312,15 @@ export default function PaginaDashboard() {
   }, [filtradas]);
 
   const byRoad = useMemo(() => {
-    const mapa = new Map<string, { area: number; cost: number }>();
-    filtradas.forEach((linha) => linha.equipment.forEach((item) => { const atual = mapa.get(item.rodovia) || { area: 0, cost: 0 }; atual.area += item.area; atual.cost += item.custo; mapa.set(item.rodovia, atual); }));
-    return Array.from(mapa.entries()).map(([nome, v]) => ({ nome, area: Math.round(v.area), costPerM2: v.area > 0 ? v.cost / v.area : 0 })).sort((a, b) => b.area - a.area);
+    const mapa = new Map<string, { area: number; fuel: number }>();
+    filtradas.forEach((linha) => linha.equipment.forEach((item) => { const atual = mapa.get(item.rodovia) || { area: 0, fuel: 0 }; atual.area += item.area; atual.fuel += item.combustivel; mapa.set(item.rodovia, atual); }));
+    return Array.from(mapa.entries()).map(([nome, v]) => ({ nome, area: Math.round(v.area), fuelPerM2: v.area > 0 ? v.fuel / v.area : 0 })).sort((a, b) => b.area - a.area);
   }, [filtradas]);
 
   const bySegment = useMemo(() => {
-    const mapa = new Map<string, { area: number; cost: number }>();
-    filtradas.forEach((linha) => linha.equipment.forEach((item) => { const chave = `${item.rodovia} - ${item.canteiro}`; const atual = mapa.get(chave) || { area: 0, cost: 0 }; atual.area += item.area; atual.cost += item.custo; mapa.set(chave, atual); }));
-    return Array.from(mapa.entries()).map(([nome, v]) => ({ nome, area: Math.round(v.area), costPerM2: v.area > 0 ? v.cost / v.area : 0 })).filter((item) => item.area > 0).sort((a, b) => b.costPerM2 - a.costPerM2).slice(0, 6);
+    const mapa = new Map<string, { area: number; fuel: number }>();
+    filtradas.forEach((linha) => linha.equipment.forEach((item) => { const chave = `${item.rodovia} - ${item.canteiro}`; const atual = mapa.get(chave) || { area: 0, fuel: 0 }; atual.area += item.area; atual.fuel += item.combustivel; mapa.set(chave, atual); }));
+    return Array.from(mapa.entries()).map(([nome, v]) => ({ nome, area: Math.round(v.area), fuelPerM2: v.area > 0 ? v.fuel / v.area : 0 })).filter((item) => item.area > 0).sort((a, b) => b.fuelPerM2 - a.fuelPerM2).slice(0, 6);
   }, [filtradas]);
 
   const scatter = byTeam.map((item) => ({ nome: item.nome, teamSize: parseFloat(item.teamSize.toFixed(1)), area: Math.round(item.areaPorRelatorio), eficiencia: parseFloat(item.m2PorOperador.toFixed(1)) }));
@@ -283,31 +342,31 @@ export default function PaginaDashboard() {
     const avgSize = byTeam.length ? byTeam.reduce((s, item) => s + item.teamSize, 0) / byTeam.length : 0;
     const weakTeam = byTeam.filter((item) => item.teamSize >= avgSize && item.m2PorOperador > 0).sort((a, b) => a.m2PorOperador - b.m2PorOperador)[0];
     const bestTractor = [...byTractor].filter((item) => item.area > 0).sort((a, b) => a.fuelPerM2 - b.fuelPerM2)[0];
-    const worstRoad = [...byRoad].filter((item) => item.area > 0).sort((a, b) => b.costPerM2 - a.costPerM2)[0];
+    const worstRoad = [...byRoad].filter((item) => item.area > 0).sort((a, b) => b.fuelPerM2 - a.fuelPerM2)[0];
     if (bestTeam) list.push(`${bestTeam.nome} lidera produtividade com ${fmtRate(bestTeam.m2PorOperador, 0)} m2 por operador.`);
     if (weakTeam) list.push(`${weakTeam.nome} opera com time medio de ${fmtRate(weakTeam.teamSize, 1)} pessoas e baixa entrega relativa.`);
     if (bestTractor) list.push(`${bestTractor.nome} e o trator mais eficiente no recorte, com ${fmtRate(bestTractor.fuelPerM2, 4)} L por m2.`);
-    if (worstRoad) list.push(`${worstRoad.nome} tem o maior custo estimado por area: ${fmtCurrency(worstRoad.costPerM2)} por m2.`);
+    if (worstRoad) list.push(`${worstRoad.nome} concentra o maior consumo relativo, com ${fmtRate(worstRoad.fuelPerM2, 4)} L por m2.`);
     if (tendencia !== null) list.push(tendencia >= 0 ? `A area produzida avancou ${fmtRate(tendencia, 1)}% contra a janela anterior.` : `A area produzida recuou ${fmtRate(Math.abs(tendencia), 1)}% contra a janela anterior.`);
     return list.slice(0, 5);
   }, [byRoad, byTeam, byTractor, tendencia]);
 
-  if (carregando || carregandoConfig) return <div className="min-h-screen bg-gray-100 px-4 py-12"><div className="mx-auto max-w-6xl rounded-2xl border-2 border-gray-200 bg-white p-10 text-center"><p className="text-lg font-semibold text-gray-700">Carregando dashboard...</p></div></div>;
+  if (carregando) return <div className="min-h-screen bg-gray-100 px-4 py-12"><div className="mx-auto max-w-6xl rounded-2xl border-2 border-gray-200 bg-white p-10 text-center"><p className="text-lg font-semibold text-gray-700">Carregando dashboard...</p></div></div>;
   if (erro) return <div className="min-h-screen bg-gray-100 px-4 py-12"><div className="mx-auto max-w-4xl rounded-2xl border-2 border-red-200 bg-red-50 p-8"><h1 className="text-2xl font-bold text-red-800">Falha ao carregar o dashboard</h1><p className="mt-3 text-red-700">{erro}</p><div className="mt-5 flex gap-2"><Link href="/admin" className="rounded-xl bg-red-700 px-4 py-2 text-sm font-bold text-white">Abrir admin</Link><button type="button" onClick={carregar} className="rounded-xl border-2 border-red-300 px-4 py-2 text-sm font-bold text-red-700">Tentar novamente</button></div></div></div>;
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-green-600 text-white px-4 py-4 sticky top-0 z-50 shadow-lg"><div className="max-w-6xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-green-100 text-xs font-bold uppercase tracking-wide">Dashboard Gerencial</p><h1 className="text-2xl font-bold text-white">Painel de Performance</h1><p className="text-green-100 text-sm">Area, eficiencia, custo e comparativos entre equipes, tratores, coordenadores e rodovias.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={carregar} className="rounded-xl bg-green-500 px-4 py-2 text-sm font-bold text-white">Atualizar</button><Link href="/admin" className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-green-700">Admin</Link><Link href="/" className="rounded-xl bg-green-500 px-4 py-2 text-sm font-bold text-white">Formulario</Link></div></div></header>
+      <header className="bg-green-600 text-white px-4 py-4 sticky top-0 z-50 shadow-lg"><div className="max-w-6xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-green-100 text-xs font-bold uppercase tracking-wide">Dashboard Gerencial</p><h1 className="text-2xl font-bold text-white">Painel de Performance</h1><p className="text-green-100 text-sm">Area, eficiencia, combustivel e comparativos entre equipes, tratores, coordenadores e rodovias.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={carregar} className="rounded-xl bg-green-500 px-4 py-2 text-sm font-bold text-white">Atualizar</button><Link href="/admin" className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-green-700">Admin</Link><Link href="/" className="rounded-xl bg-green-500 px-4 py-2 text-sm font-bold text-white">Formulario</Link></div></div></header>
       <main className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 pb-10">
-        <section className="rounded-2xl border-2 border-gray-200 bg-white p-4 sm:p-5"><div className="grid gap-3 xl:grid-cols-[1.8fr_1fr]"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><div className="md:col-span-2 xl:col-span-1"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Periodo</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{([ ["7", "7 dias"], ["30", "30 dias"], ["90", "90 dias"], ["todos", "Tudo"] ] as [Periodo, string][]).map(([v, label]) => <button key={v} type="button" onClick={() => setPeriodo(v)} className={cn("rounded-xl px-3 py-2 text-sm font-bold border-2", periodo === v ? "border-green-600 bg-green-600 text-white" : "border-gray-200 bg-gray-50 text-gray-600")}>{label}</button>)}</div></div><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Granularidade</span><select value={granularidade} onChange={(e) => setGranularidade(e.target.value as Granularidade)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mes</option></select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Rodovia</span><select value={rodoviaSelecionada} onChange={(e) => setRodoviaSelecionada(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todas">Todas</option>{rodovias.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Equipe</span><select value={equipeSelecionada} onChange={(e) => setEquipeSelecionada(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todas">Todas</option>{equipes.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Trator</span><select value={tratorSelecionado} onChange={(e) => setTratorSelecionado(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todos">Todos</option>{tratores.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Tipo</span><select value={tipoTrabalho} onChange={(e) => setTipoTrabalho(e.target.value as TipoTrabalho)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todos">Todos</option><option value="manual">Manual</option><option value="trator">Trator</option><option value="robo">Robo</option></select></label></div><div className="rounded-2xl border border-amber-200 bg-amber-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">Custos usados</p><p className="mt-2 text-sm text-amber-900">Diesel {fmtCurrency(custos.diesel)}/L, gasolina {fmtCurrency(custos.gasolina)}/L e oleo 2T {fmtCurrency(custos.oleo2T)}/L.</p><p className="mt-2 text-sm text-amber-800">Se precisar ajustar esses valores, use a aba Custos no painel admin.</p><p className="mt-3 text-xs text-amber-700">{atualizadoEm ? `Base atualizada em ${atualizadoEm}` : "Aguardando sincronizacao"}</p></div></div></section>
+        <section className="rounded-2xl border-2 border-gray-200 bg-white p-4 sm:p-5"><div className="grid gap-3 xl:grid-cols-[1.8fr_1fr]"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><div className="md:col-span-2 xl:col-span-1"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Periodo</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{([ ["7", "7 dias"], ["30", "30 dias"], ["90", "90 dias"], ["todos", "Tudo"] ] as [Periodo, string][]).map(([v, label]) => <button key={v} type="button" onClick={() => setPeriodo(v)} className={cn("rounded-xl px-3 py-2 text-sm font-bold border-2", periodo === v ? "border-green-600 bg-green-600 text-white" : "border-gray-200 bg-gray-50 text-gray-600")}>{label}</button>)}</div></div><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Ano</span><select value={anoSelecionado} onChange={(e) => setAnoSelecionado(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todos">Todos</option>{anos.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Mes</span><select value={mesSelecionado} onChange={(e) => setMesSelecionado(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todos">Todos</option>{MESES.map((item) => <option key={item.valor} value={item.valor}>{item.label}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Dia</span><select value={diaSelecionado} onChange={(e) => setDiaSelecionado(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todos">Todos</option>{dias.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Granularidade</span><select value={granularidade} onChange={(e) => setGranularidade(e.target.value as Granularidade)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="dia">Dia</option><option value="semana">Semana</option><option value="mes">Mes</option></select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Rodovia</span><select value={rodoviaSelecionada} onChange={(e) => setRodoviaSelecionada(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todas">Todas</option>{rodovias.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Equipe</span><select value={equipeSelecionada} onChange={(e) => setEquipeSelecionada(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todas">Todas</option>{equipes.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Trator</span><select value={tratorSelecionado} onChange={(e) => setTratorSelecionado(e.target.value)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todos">Todos</option>{tratores.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label className="min-w-0"><span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Tipo</span><select value={tipoTrabalho} onChange={(e) => setTipoTrabalho(e.target.value as TipoTrabalho)} className="w-full rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"><option value="todos">Todos</option><option value="manual">Manual</option><option value="trator">Trator</option><option value="robo">Robo</option></select></label></div><div className="rounded-2xl border border-green-200 bg-green-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-700">Recorte selecionado</p><p className="mt-2 text-sm text-green-900">Ano, mes e dia fecham um recorte especifico. Quando nenhum deles estiver travado, o filtro rapido de periodo continua valendo.</p><p className="mt-3 text-xs text-green-700">{atualizadoEm ? `Base atualizada em ${atualizadoEm}` : "Aguardando sincronizacao"}</p></div></div></section>
 
         {filtradas.length === 0 ? <section className="rounded-2xl border-2 border-gray-200 bg-white p-10 text-center"><h2 className="text-xl font-bold text-gray-800">Nenhum dado para este recorte</h2><p className="mt-2 text-sm text-gray-500">Ajuste filtros ou verifique a sincronizacao no painel admin.</p></section> : <>
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-6"><Kpi label="Area total" value={fmtArea(totalArea)} note={`${filtradas.length} relatorios no recorte`} tone="border-green-200 bg-green-50 text-green-900" /><Kpi label="KM total" value={fmtKm(totalKm)} note="Volume executado" tone="border-blue-200 bg-blue-50 text-blue-900" /><Kpi label="m2 por operador" value={fmtRate(m2PorOperador, 0)} note="Produtividade da equipe" tone="border-green-200 bg-green-50 text-green-900" /><Kpi label="Custo por m2" value={fmtCurrency(custoPorM2)} note="Custo estimado unitario" tone="border-amber-200 bg-amber-50 text-amber-900" /><Kpi label="Combustivel por m2" value={fmtRate(combustivelPorM2, 4)} note="Litros por area produzida" tone="border-slate-200 bg-slate-50 text-slate-900" /><Kpi label="Tendencia" value={tendencia === null ? "Sem base" : `${tendencia >= 0 ? "+" : "-"}${fmtRate(Math.abs(tendencia), 1)}%`} note="Comparado com a janela anterior" tone={tendencia !== null && tendencia < 0 ? "border-amber-200 bg-amber-50 text-amber-900" : "border-blue-200 bg-blue-50 text-blue-900"} /></section>
+          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-6"><Kpi label="Area total" value={fmtArea(totalArea)} note={`${filtradas.length} relatorios no recorte`} tone="border-green-200 bg-green-50 text-green-900" /><Kpi label="KM total" value={fmtKm(totalKm)} note="Volume executado" tone="border-blue-200 bg-blue-50 text-blue-900" /><Kpi label="m2 por operador" value={fmtRate(m2PorOperador, 0)} note="Produtividade da equipe" tone="border-green-200 bg-green-50 text-green-900" /><Kpi label="Combustivel total" value={`${fmtRate(totalCombustivel, 1)} L`} note="Consumo agregado do recorte" tone="border-amber-200 bg-amber-50 text-amber-900" /><Kpi label="Combustivel por m2" value={fmtRate(combustivelPorM2, 4)} note="Litros por area produzida" tone="border-slate-200 bg-slate-50 text-slate-900" /><Kpi label="Tendencia" value={tendencia === null ? "Sem base" : `${tendencia >= 0 ? "+" : "-"}${fmtRate(Math.abs(tendencia), 1)}%`} note="Comparado com a janela anterior" tone={tendencia !== null && tendencia < 0 ? "border-amber-200 bg-amber-50 text-amber-900" : "border-blue-200 bg-blue-50 text-blue-900"} /></section>
           <div className="grid gap-5 xl:grid-cols-[1.45fr_1fr]"><Card title="Performance" subtitle="Volume produzido no tempo e comparativo por coordenador."><div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]"><div><ResponsiveContainer width="100%" height={280}><LineChart data={tempo}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis dataKey="label" tick={{ fontSize: 11 }} /><YAxis tick={{ fontSize: 11 }} tickFormatter={fmtAxisArea} /><Tooltip formatter={(value) => [fmtArea(Number(value)), "Area"]} /><Line type="monotone" dataKey="area" stroke="#15803d" strokeWidth={3} dot={{ r: 3 }} /></LineChart></ResponsiveContainer></div><div className="space-y-3">{byCoordinator.map((item, index) => <div key={item.nome} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-semibold text-slate-900">{index + 1}. {item.nome}</p><p className="text-xs text-slate-500">{fmtRate(item.m2PorOperador, 0)} m2 por operador</p></div><p className="text-sm font-bold text-emerald-700">{fmtArea(item.area)}</p></div></div>)}</div></div></Card><Card title="Leituras gerenciais" subtitle="Pontos que merecem atencao de gestao."><div className="space-y-3">{insights.map((item) => <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">{item}</div>)}</div></Card></div>
           <div className="grid gap-5 xl:grid-cols-2"><Card title="Area por equipe" subtitle="Ranking principal para comparar execucao entre equipes."><ResponsiveContainer width="100%" height={Math.max(280, topTeam.length * 44)}><BarChart data={topTeam} layout="vertical" margin={{ left: 4, right: 12 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={fmtAxisArea} /><YAxis dataKey="nome" type="category" width={92} tick={{ fontSize: 11 }} /><Tooltip formatter={(value) => [fmtArea(Number(value)), "Area"]} /><Bar dataKey="area" radius={[0, 8, 8, 0]}>{topTeam.map((item, index, array) => <Cell key={item.nome} fill={rankColor(index, array.length)} />)}</Bar></BarChart></ResponsiveContainer></Card><Card title="Area por trator" subtitle="Comparativo de produtividade entre tratores."><ResponsiveContainer width="100%" height={Math.max(280, topTractor.length * 44)}><BarChart data={topTractor} layout="vertical" margin={{ left: 4, right: 12 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={fmtAxisArea} /><YAxis dataKey="nome" type="category" width={96} tick={{ fontSize: 11 }} /><Tooltip formatter={(value) => [fmtArea(Number(value)), "Area"]} /><Bar dataKey="area" radius={[0, 8, 8, 0]}>{topTractor.map((item, index, array) => <Cell key={item.nome} fill={rankColor(index, array.length)} />)}</Bar></BarChart></ResponsiveContainer></Card></div>
           <div className="grid gap-5 xl:grid-cols-2"><Card title="Eficiencia" subtitle="X = tamanho da equipe, Y = area por relatorio."><ResponsiveContainer width="100%" height={300}><ScatterChart margin={{ top: 16, right: 12, bottom: 8, left: 0 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" dataKey="teamSize" tick={{ fontSize: 11 }} /><YAxis type="number" dataKey="area" tick={{ fontSize: 11 }} tickFormatter={fmtAxisArea} /><ZAxis type="number" dataKey="eficiencia" range={[80, 320]} /><Tooltip formatter={(value, name) => name === "area" ? [fmtArea(Number(value)), "Area por relatorio"] : name === "teamSize" ? [fmtRate(Number(value), 1), "Tamanho medio"] : [fmtRate(Number(value), 0), "m2 por operador"]} labelFormatter={(_, payload) => payload?.[0]?.payload?.nome || ""} /><Scatter data={scatter} fill="#2563eb">{scatter.map((item, index) => <Cell key={item.nome} fill={index === 0 ? "#15803d" : "#2563eb"} />)}</Scatter></ScatterChart></ResponsiveContainer></Card><Card title="m2 por operador por equipe" subtitle="Produtividade sem vies de tamanho de equipe."><ResponsiveContainer width="100%" height={Math.max(280, topTeam.length * 44)}><BarChart data={topTeam} layout="vertical" margin={{ left: 4, right: 12 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" tick={{ fontSize: 11 }} /><YAxis dataKey="nome" type="category" width={92} tick={{ fontSize: 11 }} /><Tooltip formatter={(value) => [`${fmtRate(Number(value), 0)} m2`, "m2 por operador"]} /><Bar dataKey="m2PorOperador" fill="#0f766e" radius={[0, 8, 8, 0]} /></BarChart></ResponsiveContainer></Card></div>
           <div className="grid gap-5 xl:grid-cols-2"><Card title="Combustivel por km por equipe" subtitle="Onde o consumo operacional esta mais pesado."><ResponsiveContainer width="100%" height={Math.max(280, fuelTeam.length * 44)}><BarChart data={fuelTeam} layout="vertical" margin={{ left: 4, right: 12 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" tick={{ fontSize: 11 }} /><YAxis dataKey="nome" type="category" width={92} tick={{ fontSize: 11 }} /><Tooltip formatter={(value) => [`${fmtRate(Number(value), 2)} L/km`, "Consumo"]} /><Bar dataKey="fuelPerKm" fill="#b45309" radius={[0, 8, 8, 0]} /></BarChart></ResponsiveContainer></Card><Card title="Combustivel por m2 por trator" subtitle="Comparativo de consumo entre equipamentos."><ResponsiveContainer width="100%" height={Math.max(280, fuelTractor.length * 44)}><BarChart data={fuelTractor} layout="vertical" margin={{ left: 4, right: 12 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" tick={{ fontSize: 11 }} /><YAxis dataKey="nome" type="category" width={96} tick={{ fontSize: 11 }} /><Tooltip formatter={(value) => [`${fmtRate(Number(value), 4)} L/m2`, "Consumo"]} /><Bar dataKey="fuelPerM2" fill="#475569" radius={[0, 8, 8, 0]} /></BarChart></ResponsiveContainer></Card></div>
-          <div className="grid gap-5 xl:grid-cols-2"><Card title="Rodovias" subtitle="Rodovias com maior area executada no recorte."><ResponsiveContainer width="100%" height={Math.max(280, topRoad.length * 44)}><BarChart data={topRoad} layout="vertical" margin={{ left: 4, right: 12 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={fmtAxisArea} /><YAxis dataKey="nome" type="category" width={96} tick={{ fontSize: 11 }} /><Tooltip formatter={(value) => [fmtArea(Number(value)), "Area"]} /><Bar dataKey="area" fill="#0f766e" radius={[0, 8, 8, 0]} /></BarChart></ResponsiveContainer></Card><Card title="Segmentos criticos" subtitle="Segmentos com maior custo estimado por m2."><div className="space-y-3">{bySegment.map((item, index) => <div key={item.nome} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-semibold text-slate-900">{index + 1}. {item.nome}</p><p className="text-xs text-slate-500">Area {fmtArea(item.area)}</p></div><p className="text-sm font-bold text-red-700">{fmtCurrency(item.costPerM2)}/m2</p></div></div>)}</div></Card></div>
+          <div className="grid gap-5 xl:grid-cols-2"><Card title="Rodovias" subtitle="Rodovias com maior area executada no recorte."><ResponsiveContainer width="100%" height={Math.max(280, topRoad.length * 44)}><BarChart data={topRoad} layout="vertical" margin={{ left: 4, right: 12 }}><CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" /><XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={fmtAxisArea} /><YAxis dataKey="nome" type="category" width={96} tick={{ fontSize: 11 }} /><Tooltip formatter={(value) => [fmtArea(Number(value)), "Area"]} /><Bar dataKey="area" fill="#0f766e" radius={[0, 8, 8, 0]} /></BarChart></ResponsiveContainer></Card><Card title="Segmentos criticos" subtitle="Segmentos com maior consumo relativo por m2."><div className="space-y-3">{bySegment.map((item, index) => <div key={item.nome} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-semibold text-slate-900">{index + 1}. {item.nome}</p><p className="text-xs text-slate-500">Area {fmtArea(item.area)}</p></div><p className="text-sm font-bold text-red-700">{fmtRate(item.fuelPerM2, 4)} L/m2</p></div></div>)}</div></Card></div>
           <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]"><Card title="Qualidade operacional" subtitle="Impactos externos e disciplina operacional do periodo."><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[{ label: "Dias produtivos", value: String(quality.productive) }, { label: "Dias com chuva", value: String(quality.rain) }, { label: "Dias com trafego", value: String(quality.traffic) }, { label: "Dias com falha", value: String(quality.failure) }].map((item) => <div key={item.label} className="rounded-2xl border border-gray-200 bg-gray-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">{item.label}</p><p className="mt-2 text-3xl font-bold text-gray-800">{item.value}</p></div>)}</div><div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4"><p className="text-sm font-semibold text-gray-800">{fmtRate(quality.total > 0 ? (quality.productive / quality.total) * 100 : 0, 1)}% dos dias do recorte tiveram producao efetiva.</p><p className="mt-1 text-sm text-gray-500">{Math.max(0, quality.total - quality.productive)} dias ficaram sem entrega mensuravel de area.</p></div></Card><Card title="Notas da gestao" subtitle="Resumo curto para validar contexto sem virar log operacional."><div className="space-y-3">{byCoordinator.slice(0, 3).map((item) => <div key={item.nome} className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"><p className="text-sm font-semibold text-gray-800">{item.nome}</p><p className="mt-1 text-xs text-gray-500">Area {fmtArea(item.area)} | {fmtRate(item.m2PorOperador, 0)} m2 por operador</p></div>)}</div></Card></div>
         </>}
       </main>

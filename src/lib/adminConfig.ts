@@ -31,11 +31,6 @@ export const CONFIG_PADRAO: AdminConfig = {
   tiposRocadeira: TIPOS_ROCADEIRA_PADRAO,
   tiposRobo: TIPOS_ROBO_PADRAO,
   condicoesTrabalho: CONDICOES_TRABALHO_PADRAO,
-  custosReferencia: {
-    diesel: 6.25,
-    gasolina: 6.05,
-    oleo2T: 32,
-  },
 };
 
 // Carrega config (ou retorna padrão se não existir)
@@ -46,10 +41,6 @@ export async function getAdminConfig(): Promise<AdminConfig> {
       return {
         ...CONFIG_PADRAO,
         ...salva,
-        custosReferencia: {
-          ...CONFIG_PADRAO.custosReferencia,
-          ...salva.custosReferencia,
-        },
       };
     }
     // Primeira execução: salva o padrão
